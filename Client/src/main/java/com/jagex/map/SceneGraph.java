@@ -714,10 +714,10 @@ public class SceneGraph {
 
 	public void addTemporaryTile(int plane, int x, int y, int type, int orientation, int texture, int underlayColour, int textureColour) {
 
-		int centreZ = getMapRegion().tileHeights[plane][x][y];
-		int eastZ = getMapRegion().tileHeights[plane][x + 1][y];
-		int northEastZ = getMapRegion().tileHeights[plane][x + 1][y + 1];
-		int northZ = getMapRegion().tileHeights[plane][x][y + 1];
+		int centreZ = getMapRegion().heightMap[plane][x][y];
+		int eastZ = getMapRegion().heightMap[plane][x + 1][y];
+		int northEastZ = getMapRegion().heightMap[plane][x + 1][y + 1];
+		int northZ = getMapRegion().heightMap[plane][x][y + 1];
 		if (type == 0) {
 			SimpleTile tile = new SimpleTile(underlayColour, underlayColour, underlayColour, underlayColour, -1,
 					underlayColour, false, 0, false);
@@ -973,18 +973,18 @@ public class SceneGraph {
 
 
 			if (copyOptions.copyOverlays()) {
-				sceneTileData.setOverlayId(chunk.mapRegion.overlays[z][x][y]);
-				sceneTileData.setOverlayOrientation(chunk.mapRegion.overlayOrientations[z][x][y]);
-				sceneTileData.setOverlayType(chunk.mapRegion.overlayShapes[z][x][y]);
+				sceneTileData.setOverlayId(chunk.mapRegion.overlayIds[z][x][y]);
+				sceneTileData.setOverlayOrientation(chunk.mapRegion.overlayRotation[z][x][y]);
+				sceneTileData.setOverlayType(chunk.mapRegion.overlayShape[z][x][y]);
 			}
 			if (copyOptions.copyUnderlays()) {
-				sceneTileData.setUnderlayId(chunk.mapRegion.underlays[z][x][y]);
+				sceneTileData.setUnderlayId(chunk.mapRegion.underlay[z][x][y]);
 			}
 			if (copyOptions.copyTileHeights()) {
-				sceneTileData.setTileHeight(chunk.mapRegion.tileHeights[z][x][y]);
+				sceneTileData.setTileHeight(chunk.mapRegion.heightMap[z][x][y]);
 			}
 			if (copyOptions.copyTileFlags()) {
-				sceneTileData.setTileFlag(chunk.mapRegion.tileFlags[z][x][y]);
+				sceneTileData.setTileFlag(chunk.mapRegion.flags[z][x][y]);
 			}
 			sceneTileData.setX(x - fMinX);
 			sceneTileData.setY(y - fMinY);
@@ -1022,15 +1022,15 @@ public class SceneGraph {
 						}
 
 						if (deleteOptions.deleteOverlays()) {
-							chunk.mapRegion.overlays[z][x][y] = 0;
-							chunk.mapRegion.overlayOrientations[z][x][y] = 0;
-							chunk.mapRegion.overlayShapes[z][x][y] = 0;
+							chunk.mapRegion.overlayIds[z][x][y] = 0;
+							chunk.mapRegion.overlayRotation[z][x][y] = 0;
+							chunk.mapRegion.overlayShape[z][x][y] = 0;
 						}
 						if (deleteOptions.deleteUnderlays()) {
-							chunk.mapRegion.underlays[z][x][y] = 0;
+							chunk.mapRegion.underlay[z][x][y] = 0;
 						}
 						if (deleteOptions.deleteTileFlags()) {
-							chunk.mapRegion.tileFlags[z][x][y] = 0;
+							chunk.mapRegion.flags[z][x][y] = 0;
 						}
 
 					}
@@ -1263,18 +1263,18 @@ public class SceneGraph {
 						}
 
 						if (exportOptions.exportOverlays()) {
-							sceneTileData.setOverlayId(chunk.mapRegion.overlays[z][x][y]);
-							sceneTileData.setOverlayOrientation(chunk.mapRegion.overlayOrientations[z][x][y]);
-							sceneTileData.setOverlayType(chunk.mapRegion.overlayShapes[z][x][y]);
+							sceneTileData.setOverlayId(chunk.mapRegion.overlayIds[z][x][y]);
+							sceneTileData.setOverlayOrientation(chunk.mapRegion.overlayRotation[z][x][y]);
+							sceneTileData.setOverlayType(chunk.mapRegion.overlayShape[z][x][y]);
 						}
 						if (exportOptions.exportUnderlays()) {
-							sceneTileData.setUnderlayId(chunk.mapRegion.underlays[z][x][y]);
+							sceneTileData.setUnderlayId(chunk.mapRegion.underlay[z][x][y]);
 						}
 						if (exportOptions.exportTileHeights()) {
-							sceneTileData.setTileHeight(chunk.mapRegion.tileHeights[z][x][y]);
+							sceneTileData.setTileHeight(chunk.mapRegion.heightMap[z][x][y]);
 						}
 						if (exportOptions.exportTileFlags()) {
-							sceneTileData.setTileFlag(chunk.mapRegion.tileFlags[z][x][y]);
+							sceneTileData.setTileFlag(chunk.mapRegion.flags[z][x][y]);
 						}
 						sceneTileData.setX(x - minX);
 						sceneTileData.setY(y - minY);
@@ -1352,7 +1352,7 @@ public class SceneGraph {
 
 				if (absX < 0 || absY < 0 || absX >= width || absY >= length)
 					continue;
-				heights[pos] = getMapRegion().tileHeights[plane][x + xMod][y + yMod];
+				heights[pos] = getMapRegion().heightMap[plane][x + xMod][y + yMod];
 
 				pos++;
 			}
@@ -1638,10 +1638,10 @@ public class SceneGraph {
 							((TileChange<FlagState>) currentState.get()).preserveTileState(tileState);
 						}
 						if (KeyBindings.actionValid(KeyActions.INVERSE_FLAG_SET)) {
-							BitFlag bitFlag = SceneGraph.inverseFlag(new BitFlag(this.getMapRegion().tileFlags[plane][absX][absY]), Options.tileFlags.get());
-							this.getMapRegion().tileFlags[plane][absX][absY] = bitFlag.encode();
+							BitFlag bitFlag = SceneGraph.inverseFlag(new BitFlag(this.getMapRegion().flags[plane][absX][absY]), Options.tileFlags.get());
+							this.getMapRegion().flags[plane][absX][absY] = bitFlag.encode();
 						} else {
-							this.getMapRegion().tileFlags[plane][absX][absY] = Options.tileFlags.get().encode();
+							this.getMapRegion().flags[plane][absX][absY] = Options.tileFlags.get().encode();
 
 						}
 						this.tiles[plane][absX][absY].hasUpdated = true;
@@ -1671,17 +1671,17 @@ public class SceneGraph {
 										((TileChange<OverlayState>) currentState.get()).preserveTileState(tileState);
 									}
 									if (Options.overlayPaintShapeId.get() == 0 || KeyBindings.actionValid(KeyActions.OVERLAY_REMOVE)) {
-										this.getMapRegion().overlays[plane][absX][absY] = (byte) 0;
+										this.getMapRegion().overlayIds[plane][absX][absY] = (byte) 0;
 									} else {
 										if (!KeyBindings.actionValid(KeyActions.OVERLAY_ONLY_PAINT)) {
-											this.getMapRegion().overlays[plane][absX][absY] = (byte) Options.overlayPaintId
+											this.getMapRegion().overlayIds[plane][absX][absY] = (byte) Options.overlayPaintId
 													.get();
-											this.getMapRegion().overlayShapes[plane][absX][absY] = (byte) (Options.overlayPaintShapeId
+											this.getMapRegion().overlayShape[plane][absX][absY] = (byte) (Options.overlayPaintShapeId
 													.get() - 1);
-											this.getMapRegion().overlayOrientations[plane][absX][absY] = (byte) Options.rotation.get();
+											this.getMapRegion().overlayRotation[plane][absX][absY] = (byte) Options.rotation.get();
 										} else {
-											if (this.getMapRegion().overlays[plane][absX][absY] > 0) {
-												this.getMapRegion().overlays[plane][absX][absY] = (byte) Options.overlayPaintId
+											if (this.getMapRegion().overlayIds[plane][absX][absY] > 0) {
+												this.getMapRegion().overlayIds[plane][absX][absY] = (byte) Options.overlayPaintId
 														.get();
 											}
 										}
@@ -1693,7 +1693,7 @@ public class SceneGraph {
 										tileState.preserve();
 										((TileChange<UnderlayState>) currentState.get()).preserveTileState(tileState);
 									}
-									this.getMapRegion().underlays[plane][absX][absY] = (byte) Options.underlayPaintId
+									this.getMapRegion().underlay[plane][absX][absY] = (byte) Options.underlayPaintId
 											.get();
 									this.tiles[plane][absX][absY].hasUpdated = true;
 								}
@@ -1703,16 +1703,16 @@ public class SceneGraph {
 
 								if (Options.currentTool.get() == ToolType.PAINT_OVERLAY) {
 									if (KeyBindings.actionValid(KeyActions.OVERLAY_REMOVE)) {
-										int existing = getMapRegion().overlays[plane][absX][absY];
-										int shape = getMapRegion().overlayShapes[plane][absX][absY];
-										int rotation = getMapRegion().overlayOrientations[plane][absX][absY];
+										int existing = getMapRegion().overlayIds[plane][absX][absY];
+										int shape = getMapRegion().overlayShape[plane][absX][absY];
+										int rotation = getMapRegion().overlayRotation[plane][absX][absY];
 										if (existing > 0) {
 											this.addTemporaryTile(plane, absX, absY, shape + 1, rotation, -1, 0, 62000);//TODO Make this reflect the tile colour
 										}
 									} else if (KeyBindings.actionValid(KeyActions.OVERLAY_ONLY_PAINT)) {
-										int existing = getMapRegion().overlays[plane][absX][absY];
-										int shape = getMapRegion().overlayShapes[plane][absX][absY];
-										int rotation = getMapRegion().overlayOrientations[plane][absX][absY];
+										int existing = getMapRegion().overlayIds[plane][absX][absY];
+										int shape = getMapRegion().overlayShape[plane][absX][absY];
+										int rotation = getMapRegion().overlayRotation[plane][absX][absY];
 										if (existing > 0) {
 											this.addTemporaryTile(plane, absX, absY, shape + 1, rotation, -1, 0, 9997965);//TODO Make this reflect the tile colour
 										}
@@ -1778,25 +1778,25 @@ public class SceneGraph {
 							}
 
 							if (data.getOverlayId() != -1) {
-								getMapRegion().overlays[zPos][xPos][yPos] = data.getOverlayId();
-								getMapRegion().overlayShapes[zPos][xPos][yPos] = data.getOverlayType();
-								getMapRegion().overlayOrientations[zPos][xPos][yPos] = (byte) ((data.getOverlayOrientation()
+								getMapRegion().overlayIds[zPos][xPos][yPos] = data.getOverlayId();
+								getMapRegion().overlayShape[zPos][xPos][yPos] = data.getOverlayType();
+								getMapRegion().overlayRotation[zPos][xPos][yPos] = (byte) ((data.getOverlayOrientation()
 										- Options.rotation.get()) & 3);
 							}
 
 							if (data.getUnderlayId() != -1) {
-								getMapRegion().underlays[zPos][xPos][yPos] = data.getUnderlayId();
+								getMapRegion().underlay[zPos][xPos][yPos] = data.getUnderlayId();
 							}
 							if (data.getTileHeight() != -1) {
 								if (zPos == data.getZ()) {
-									getMapRegion().tileHeights[zPos][xPos][yPos] = data.getTileHeight();
+									getMapRegion().heightMap[zPos][xPos][yPos] = data.getTileHeight();
 								} else if (data.getZ() <= 0) {
-									getMapRegion().tileHeights[zPos][xPos][yPos] = getMapRegion().tileHeights[zPos - 1][xPos][yPos] + data.getTileHeight();
+									getMapRegion().heightMap[zPos][xPos][yPos] = getMapRegion().heightMap[zPos - 1][xPos][yPos] + data.getTileHeight();
 								} else {
 									Optional<SceneTileData> optionalData = getTileAt.apply(new Location(xPos, yPos, data.getZ() - 1));
 
 									optionalData.ifPresent(originalDataBelow -> {
-										getMapRegion().tileHeights[zPos][xPos][yPos] = originalDataBelow.getTileHeight() - data.getTileHeight();
+										getMapRegion().heightMap[zPos][xPos][yPos] = originalDataBelow.getTileHeight() - data.getTileHeight();
 									});
 								}
 
@@ -1804,7 +1804,7 @@ public class SceneGraph {
 
 							}
 							if (data.getTileFlag() != -1) {
-								getMapRegion().tileFlags[zPos][xPos][yPos] = data.getTileFlag();
+								getMapRegion().flags[zPos][xPos][yPos] = data.getTileFlag();
 							}
 
 						}
@@ -1968,7 +1968,7 @@ public class SceneGraph {
 					if (!ctrlDown && Config.HEIGHT_SMOOTHING) {
 						brushSize += 1;//For smoothing
 					}
-					final int[][] oldHeights = getMapRegion().tileHeights[plane];
+					final int[][] oldHeights = getMapRegion().heightMap[plane];
 					brushSelection(brushSize, true,
 							(absX, absY) -> {
 								if (currentState.isPresent() && currentState.get().getType() == StateChangeType.TILE_HEIGHT) {
@@ -1981,15 +1981,15 @@ public class SceneGraph {
 
 								this.getMapRegion().manualTileHeight[plane][absX][absY] = 1;
 								if (KeyboardState.isKeyPressed(KeyCode.SHIFT) && KeyboardState.isKeyPressed(KeyCode.ALT)) {
-									this.getMapRegion().tileHeights[plane][absX][absY] = -Options.tileHeightLevel.get();
+									this.getMapRegion().heightMap[plane][absX][absY] = -Options.tileHeightLevel.get();
 									System.out.println("ABS");
 								} else if (KeyboardState.isKeyPressed(KeyCode.SHIFT)) {
-									this.getMapRegion().tileHeights[plane][absX][absY] += Config.HEIGHT_ADJUST;
+									this.getMapRegion().heightMap[plane][absX][absY] += Config.HEIGHT_ADJUST;
 									for (int z = plane + 1; z < 4; z++) {
-										this.getMapRegion().tileHeights[z][absX][absY] += Config.HEIGHT_ADJUST;
+										this.getMapRegion().heightMap[z][absX][absY] += Config.HEIGHT_ADJUST;
 									}
 								} else if (KeyboardState.isKeyPressed(KeyCode.ALT)) {
-									this.getMapRegion().tileHeights[plane][absX][absY] = (plane > 0 ? !Options.absoluteHeightProperty.get() ? this.getMapRegion().tileHeights[plane - 1][absX][absY] : 0 : 0) - Options.tileHeightLevel.get();
+									this.getMapRegion().heightMap[plane][absX][absY] = (plane > 0 ? !Options.absoluteHeightProperty.get() ? this.getMapRegion().heightMap[plane - 1][absX][absY] : 0 : 0) - Options.tileHeightLevel.get();
 
 								} else if (KeyboardState.isKeyPressed(KeyCode.CONTROL)) {
 									int total = 0;
@@ -2001,17 +2001,17 @@ public class SceneGraph {
 												count++;
 											}
 									int avg = total / count;
-									int diff = getMapRegion().tileHeights[plane][absX][absY] - avg;
-									getMapRegion().tileHeights[plane][absX][absY] = avg;
-									if (getMapRegion().tileHeights[plane][absX][absY] > 0)
-										getMapRegion().tileHeights[plane][absX][absY] = 0;
+									int diff = getMapRegion().heightMap[plane][absX][absY] - avg;
+									getMapRegion().heightMap[plane][absX][absY] = avg;
+									if (getMapRegion().heightMap[plane][absX][absY] > 0)
+										getMapRegion().heightMap[plane][absX][absY] = 0;
 									for (int z = plane + 1; z < 4; z++) {
-										this.getMapRegion().tileHeights[z][absX][absY] -= diff;
+										this.getMapRegion().heightMap[z][absX][absY] -= diff;
 									}
 								} else {
-									this.getMapRegion().tileHeights[plane][absX][absY] -= Config.HEIGHT_ADJUST;
+									this.getMapRegion().heightMap[plane][absX][absY] -= Config.HEIGHT_ADJUST;
 									for (int z = plane + 1; z < 4; z++) {
-										this.getMapRegion().tileHeights[z][absX][absY] -= Config.HEIGHT_ADJUST;
+										this.getMapRegion().heightMap[z][absX][absY] -= Config.HEIGHT_ADJUST;
 									}
 								}
 								this.tiles[plane][absX][absY].hasUpdated = true;
@@ -2020,15 +2020,15 @@ public class SceneGraph {
 								 * this.getMapRegion().tileHeights[plane][absX][absY] = -480; }
 								 */
 
-								if (getMapRegion().tileHeights[plane][absX][absY] > 0)
-									getMapRegion().tileHeights[plane][absX][absY] = 0;
+								if (getMapRegion().heightMap[plane][absX][absY] > 0)
+									getMapRegion().heightMap[plane][absX][absY] = 0;
 
 								for (int z = 1; z < 4; z++) {
 									this.tiles[z][absX][absY].hasUpdated = true;
-									if (this.getMapRegion().tileHeights[z][absX][absY] > this.getMapRegion().tileHeights[z - 1][absX][absY]) {
-										this.getMapRegion().tileHeights[z][absX][absY] = this.getMapRegion().tileHeights[z - 1][absX][absY];//Not sure on this
-									} else if(this.getMapRegion().tileHeights[z - 1][absX][absY] < this.getMapRegion().tileHeights[z][absX][absY]){
-										this.getMapRegion().tileHeights[z - 1][absX][absY] = this.getMapRegion().tileHeights[z][absX][absY];
+									if (this.getMapRegion().heightMap[z][absX][absY] > this.getMapRegion().heightMap[z - 1][absX][absY]) {
+										this.getMapRegion().heightMap[z][absX][absY] = this.getMapRegion().heightMap[z - 1][absX][absY];//Not sure on this
+									} else if(this.getMapRegion().heightMap[z - 1][absX][absY] < this.getMapRegion().heightMap[z][absX][absY]){
+										this.getMapRegion().heightMap[z - 1][absX][absY] = this.getMapRegion().heightMap[z][absX][absY];
 									}
 								}
 
@@ -2116,7 +2116,7 @@ public class SceneGraph {
 	public void smoothHeights(int x, int y, int plane) {
 		int brushSize = Options.brushSize.get();
 		int mapSize = 64;
-		int[][] oldHeights = getMapRegion().tileHeights[plane];
+		int[][] oldHeights = getMapRegion().heightMap[plane];
 		double mod = 0;
 		double rSq = brushSize * brushSize;
 		for (double yPos = y - brushSize; yPos <= y + brushSize; yPos++) {
@@ -2136,7 +2136,7 @@ public class SceneGraph {
 								count++;
 							}
 					int avg = total / count;
-					getMapRegion().tileHeights[plane][absX][absY] = avg;
+					getMapRegion().heightMap[plane][absX][absY] = avg;
 				}
 			}
 		}
@@ -2157,7 +2157,7 @@ public class SceneGraph {
 	 * @param height The height of the area to update
 	 */
 	public void updateHeights(int x, int y, int width, int height) {
-		int mapSize = getMapRegion().tileHeights[0].length - 1;
+		int mapSize = getMapRegion().heightMap[0].length - 1;
 		for (int tileX = 0; tileX < width; tileX++) {
 			for (int tileY = 0; tileY < height; tileY++) {
 				for (int z = 3; z >= 0; z--) {
@@ -2184,10 +2184,10 @@ public class SceneGraph {
 								if (type == 4) {
 									orientation /= 512;
 								}
-								int centre = getMapRegion().tileHeights[z][absX][absY];
-								int east = getMapRegion().tileHeights[z][absX + 1][absY];
-								int northEast = getMapRegion().tileHeights[z][absX + 1][absY + 1];
-								int north = getMapRegion().tileHeights[z][absX][absY + 1];
+								int centre = getMapRegion().heightMap[z][absX][absY];
+								int east = getMapRegion().heightMap[z][absX + 1][absY];
+								int northEast = getMapRegion().heightMap[z][absX + 1][absY + 1];
+								int north = getMapRegion().heightMap[z][absX][absY + 1];
 								int mean = centre + east + northEast + north >> 2;
 								/*
 								 * if(type >= 12 && type <= 21) if (orientation == 1) { int tmp = dY; dY =
@@ -2447,14 +2447,14 @@ public class SceneGraph {
 							if (y >= 0 && y < length && (!flag || x >= finalX || y >= finalY || y < startY && x != startX)) {
 								SceneTile tile = tiles[z][x][y];
 								if (tile != null) {
-									int averageTileHeight = (getMapRegion().tileHeights[z][x][y]
-											+ getMapRegion().tileHeights[z][x + 1][y]
-											+ getMapRegion().tileHeights[z][x][y + 1]
-											+ getMapRegion().tileHeights[z][x + 1][y + 1]) / 4
-											- (getMapRegion().tileHeights[plane][startX][startY]
-											+ getMapRegion().tileHeights[plane][startX + 1][startY]
-											+ getMapRegion().tileHeights[plane][startX][startY + 1]
-											+ getMapRegion().tileHeights[plane][startX + 1][startY + 1]) / 4;
+									int averageTileHeight = (getMapRegion().heightMap[z][x][y]
+											+ getMapRegion().heightMap[z][x + 1][y]
+											+ getMapRegion().heightMap[z][x][y + 1]
+											+ getMapRegion().heightMap[z][x + 1][y + 1]) / 4
+											- (getMapRegion().heightMap[plane][startX][startY]
+											+ getMapRegion().heightMap[plane][startX + 1][startY]
+											+ getMapRegion().heightMap[plane][startX][startY + 1]
+											+ getMapRegion().heightMap[plane][startX + 1][startY + 1]) / 4;
 
 									Wall wall = (Wall) SceneGraph.getTemporaryOrDefault(tile, WorldObjectType.WALL);
 
@@ -2645,7 +2645,7 @@ public class SceneGraph {
 						SceneTile tile = tiles[x][y];
 						if (tile != null) {
 							if (tile.collisionPlane > cameraPlane || !aBooleanArrayArray492[x - minViewX][y - minViewY]
-									&& chunk.mapRegion.tileHeights[z][x][y] - cameraTileZ < 50) {
+									&& chunk.mapRegion.heightMap[z][x][y] - cameraTileZ < 50) {
 								tile.needsRendering = false;
 								tile.aBoolean1323 = false;
 								tile.anInt1325 = 0;
@@ -2773,7 +2773,7 @@ public class SceneGraph {
 			if (Options.showUnderlayNumbers.get()) {
 				if (activeTile != null) {
 					try {
-						int underlayId = getMapRegion().underlays[activeTile.plane][activeTile.positionX][activeTile.positionY] - 1;
+						int underlayId = getMapRegion().underlay[activeTile.plane][activeTile.positionX][activeTile.positionY] - 1;
 						if (underlayId > 0 && screenPos.getX() > 0 && screenPos.getY() > 0)
 							Client.getSingleton().robotoFont.drawString("" + underlayId, (int) screenPos.getX(), (int) screenPos.getY(), 0xffff00);
 					} catch (Exception e) {
@@ -2783,7 +2783,7 @@ public class SceneGraph {
 			if (Options.showOverlayNumbers.get()) {
 				if (activeTile != null) {
 					try {
-						int overlayId = getMapRegion().overlays[activeTile.plane][activeTile.positionX][activeTile.positionY] - 1;
+						int overlayId = getMapRegion().overlayIds[activeTile.plane][activeTile.positionX][activeTile.positionY] - 1;
 						if (overlayId > 0 && screenPos.getX() > 0 && screenPos.getY() > 0)
 							Client.getSingleton().robotoFont.drawString("" + overlayId, (int) screenPos.getX(), (int) screenPos.getY(), 0xffff00);
 					} catch (Exception e) {
@@ -2794,9 +2794,9 @@ public class SceneGraph {
 			if (Options.showTileHeightNumbers.get()) {
 				if (activeTile != null) {
 					try {
-						int tileHeight = getMapRegion().tileHeights[activeTile.plane][activeTile.positionX][activeTile.positionY];
+						int tileHeight = getMapRegion().heightMap[activeTile.plane][activeTile.positionX][activeTile.positionY];
 						if (activeTile.plane > 0 && !Options.absoluteHeightProperty.get())
-							tileHeight -= getMapRegion().tileHeights[activeTile.plane - 1][activeTile.positionX][activeTile.positionY];
+							tileHeight -= getMapRegion().heightMap[activeTile.plane - 1][activeTile.positionX][activeTile.positionY];
 						if (screenPos.getX() > 0 && screenPos.getY() > 0)
 							Client.getSingleton().robotoFont.drawString("" + (-tileHeight), (int) screenPos.getX(), (int) screenPos.getY(), 0xffff00);
 					} catch (Exception e) {
@@ -2953,10 +2953,10 @@ public class SceneGraph {
 		int worldX = x << 7;
 		int worldY = y << 7;
 
-		if (method324(worldX + 1, worldY + 1, getMapRegion().tileHeights[z][x][y])
-				&& method324(worldX + 128 - 1, worldY + 1, getMapRegion().tileHeights[z][x + 1][y])
-				&& method324(worldX + 128 - 1, worldY + 128 - 1, getMapRegion().tileHeights[z][x + 1][y + 1])
-				&& method324(worldX + 1, worldY + 128 - 1, getMapRegion().tileHeights[z][x][y + 1])) {
+		if (method324(worldX + 1, worldY + 1, getMapRegion().heightMap[z][x][y])
+				&& method324(worldX + 128 - 1, worldY + 1, getMapRegion().heightMap[z][x + 1][y])
+				&& method324(worldX + 128 - 1, worldY + 128 - 1, getMapRegion().heightMap[z][x + 1][y + 1])
+				&& method324(worldX + 1, worldY + 128 - 1, getMapRegion().heightMap[z][x][y + 1])) {
 			anIntArrayArrayArray445[z][x][y] = currentRenderCycle;
 			return true;
 		}
@@ -2971,7 +2971,7 @@ public class SceneGraph {
 
 		int worldX = x << 7;
 		int worldY = y << 7;
-		int k1 = getMapRegion().tileHeights[z][x][y] - 1;
+		int k1 = getMapRegion().heightMap[z][x][y] - 1;
 		int l1 = k1 - 120;
 		int i2 = k1 - 230;
 		int j2 = k1 - 238;
@@ -3072,11 +3072,11 @@ public class SceneGraph {
 
 		int absoluteX = x << 7;
 		int absoluteY = y << 7;
-		return method324(absoluteX + 1, absoluteY + 1, getMapRegion().tileHeights[plane][x][y] - l)
-				&& method324(absoluteX + 128 - 1, absoluteY + 1, getMapRegion().tileHeights[plane][x + 1][y] - l)
+		return method324(absoluteX + 1, absoluteY + 1, getMapRegion().heightMap[plane][x][y] - l)
+				&& method324(absoluteX + 128 - 1, absoluteY + 1, getMapRegion().heightMap[plane][x + 1][y] - l)
 				&& method324(absoluteX + 128 - 1, absoluteY + 128 - 1,
-				getMapRegion().tileHeights[plane][x + 1][y + 1] - l)
-				&& method324(absoluteX + 1, absoluteY + 128 - 1, getMapRegion().tileHeights[plane][x][y + 1] - l);
+				getMapRegion().heightMap[plane][x + 1][y + 1] - l)
+				&& method324(absoluteX + 1, absoluteY + 128 - 1, getMapRegion().heightMap[plane][x][y + 1] - l);
 	}
 
 	private boolean method323(int plane, int minX, int maxX, int minY, int maxY, int j1) {
@@ -3087,11 +3087,11 @@ public class SceneGraph {
 			int worldX = minX << 7;
 			int worldY = minY << 7;
 
-			return method324(worldX + 1, worldY + 1, getMapRegion().tileHeights[plane][minX][minY] - j1)
-					&& method324(worldX + 128 - 1, worldY + 1, getMapRegion().tileHeights[plane][minX + 1][minY] - j1)
+			return method324(worldX + 1, worldY + 1, getMapRegion().heightMap[plane][minX][minY] - j1)
+					&& method324(worldX + 128 - 1, worldY + 1, getMapRegion().heightMap[plane][minX + 1][minY] - j1)
 					&& method324(worldX + 128 - 1, worldY + 128 - 1,
-					getMapRegion().tileHeights[plane][minX + 1][minY + 1] - j1)
-					&& method324(worldX + 1, worldY + 128 - 1, getMapRegion().tileHeights[plane][minX][minY + 1] - j1);
+					getMapRegion().heightMap[plane][minX + 1][minY + 1] - j1)
+					&& method324(worldX + 1, worldY + 128 - 1, getMapRegion().heightMap[plane][minX][minY + 1] - j1);
 		}
 
 		for (int x = minX; x <= maxX; x++) {
@@ -3103,7 +3103,7 @@ public class SceneGraph {
 
 		int minWorldX = (minX << 7) + 1;
 		int minWorldY = (minY << 7) + 2;
-		int i3 = getMapRegion().tileHeights[plane][minX][minY] - j1;
+		int i3 = getMapRegion().heightMap[plane][minX][minY] - j1;
 		if (!method324(minWorldX, minWorldY, i3))
 			return false;
 
@@ -3286,10 +3286,10 @@ public class SceneGraph {
 		int xB = xD = xA + 128;
 		int yC;
 		int yD = yC = yA + 128;
-		int centreHeight = getMapRegion().tileHeights[plane][tileX][tileY] - zCameraTile;
-		int eastHeight = getMapRegion().tileHeights[plane][tileX + 1][tileY] - zCameraTile;
-		int northEastHeight = getMapRegion().tileHeights[plane][tileX + 1][tileY + 1] - zCameraTile;
-		int northHeight = getMapRegion().tileHeights[plane][tileX][tileY + 1] - zCameraTile;
+		int centreHeight = getMapRegion().heightMap[plane][tileX][tileY] - zCameraTile;
+		int eastHeight = getMapRegion().heightMap[plane][tileX + 1][tileY] - zCameraTile;
+		int northEastHeight = getMapRegion().heightMap[plane][tileX + 1][tileY + 1] - zCameraTile;
+		int northHeight = getMapRegion().heightMap[plane][tileX][tileY + 1] - zCameraTile;
 		int l4 = yA * xSin + xA * xCos >> 16;
 		yA = yA * xCos - xA * xSin >> 16;
 		xA = l4;
@@ -3447,10 +3447,10 @@ public class SceneGraph {
 		int xB = xD = xA + 128;
 		int yC;
 		int yD = yC = yA + 128;
-		int centreHeight = getMapRegion().tileHeights[plane][tileX][tileY] - zCameraTile;
-		int eastHeight = getMapRegion().tileHeights[plane][tileX + 1][tileY] - zCameraTile;
-		int northEastHeight = getMapRegion().tileHeights[plane][tileX + 1][tileY + 1] - zCameraTile;
-		int northHeight = getMapRegion().tileHeights[plane][tileX][tileY + 1] - zCameraTile;
+		int centreHeight = getMapRegion().heightMap[plane][tileX][tileY] - zCameraTile;
+		int eastHeight = getMapRegion().heightMap[plane][tileX + 1][tileY] - zCameraTile;
+		int northEastHeight = getMapRegion().heightMap[plane][tileX + 1][tileY + 1] - zCameraTile;
+		int northHeight = getMapRegion().heightMap[plane][tileX][tileY + 1] - zCameraTile;
 		int l4 = yA * xSin + xA * xCos >> 16;
 		yA = yA * xCos - xA * xSin >> 16;
 		xA = l4;
@@ -3911,7 +3911,7 @@ public class SceneGraph {
 						!activeTile.temporaryShapedTile.isPresent() && !activeTile.temporarySimpleTile.isPresent()) {
 					SimpleTile hiddenTile = TileUtils.HIDDEN_TILE;
 					this.renderPlainTile(hiddenTile, plane, ySine, yCosine, xSine, xCosine, x, y, true,
-							activeTile.tileHighlighted, activeTile.tileSelected, activeTile.tileBeingSelected, getMapRegion().tileFlags[plane][x][y]);
+							activeTile.tileHighlighted, activeTile.tileSelected, activeTile.tileBeingSelected, getMapRegion().flags[plane][x][y]);
 				}
 
 				if (Options.showObjects.get()) {
@@ -4481,6 +4481,42 @@ public class SceneGraph {
 			}
 	}
 
+	public TreeMap<Integer, ObjectGroup> saveObjectsTreeMap(Chunk chunk) {//TODO Expand this
+		TreeMap<Integer, ObjectGroup> objectGroupMap = new TreeMap<>();
+		for (int z = 0; z < 4; z++) {
+			for (int x = chunk.offsetX; x < chunk.offsetX + 64; x++) {
+				for (int y = chunk.offsetY; y < chunk.offsetY + 64; y++) {
+					List<DefaultWorldObject> objs = new ArrayList<>();
+					SceneTile tile = tiles[z][x][y];
+					if (tile != null) {
+						for (GameObject object : tile.gameObjects)
+							if (object != null) {
+								objs.add(object);
+							}
+						if (tile.groundDecoration != null) {
+							objs.add(tile.groundDecoration);
+						}
+						if (tile.wallDecoration != null) {
+							objs.add(tile.wallDecoration);
+						}
+						if (tile.wall != null) {
+							objs.add(tile.wall);
+						}
+
+					}
+					for (DefaultWorldObject object : objs) {
+						int objectId = object.getKey().getId();
+						object.setPlane(z);// XXX?
+						ObjectGroup objectGroup = objectGroupMap.getOrDefault(objectId, new ObjectGroup(objectId));
+						objectGroup.addObject(object);
+						objectGroupMap.put(objectId, objectGroup);
+					}
+				}
+			}
+		}
+		return objectGroupMap;
+	}
+
 	public byte[] saveObjects(Chunk chunk) {//TODO Expand this
 		TreeMap<Integer, ObjectGroup> objectGroupMap = new TreeMap<>();
 		for (int z = 0; z < 4; z++) {
@@ -4713,7 +4749,7 @@ public class SceneGraph {
 				SceneTile selectedTile = getTile(plane, x, y);
 				if (selectedTile != null) {
 					if (selectedTile.tileSelected) {
-						return getMapRegion().underlays[plane][x][y];
+						return getMapRegion().underlay[plane][x][y];
 					}
 
 				}
@@ -4729,7 +4765,7 @@ public class SceneGraph {
 				SceneTile selectedTile = getTile(plane, x, y);
 				if (selectedTile != null) {
 					if (selectedTile.tileSelected) {
-						return getMapRegion().overlays[plane][x][y];
+						return getMapRegion().overlayIds[plane][x][y];
 					}
 
 				}
@@ -4762,9 +4798,9 @@ public class SceneGraph {
 				if (selectedTile != null) {
 					if (selectedTile.tileSelected) {
 						if (plane > 0) {
-							return getMapRegion().tileHeights[plane][x][y] - getMapRegion().tileHeights[plane - 1][x][y];
+							return getMapRegion().heightMap[plane][x][y] - getMapRegion().heightMap[plane - 1][x][y];
 						} else {
-							return getMapRegion().tileHeights[plane][x][y];
+							return getMapRegion().heightMap[plane][x][y];
 						}
 					}
 
@@ -4781,7 +4817,7 @@ public class SceneGraph {
 				SceneTile selectedTile = getTile(plane, x, y);
 				if (selectedTile != null) {
 					if (selectedTile.tileSelected) {
-						return getMapRegion().overlayShapes[plane][x][y];
+						return getMapRegion().overlayShape[plane][x][y];
 					}
 
 				}
@@ -4838,14 +4874,14 @@ public class SceneGraph {
 			getMapRegion().manualTileHeight[plane][x][y] = 1;
 			if (absolute) {
 
-				getMapRegion().tileHeights[plane][x][y] = -Options.tileHeightLevel.get();
+				getMapRegion().heightMap[plane][x][y] = -Options.tileHeightLevel.get();
 			} else {
-				getMapRegion().tileHeights[plane][x][y] = (plane == 0 ? 0 - Options.tileHeightLevel.get()
-						: getMapRegion().tileHeights[plane - 1][x][y] - Options.tileHeightLevel.get());
+				getMapRegion().heightMap[plane][x][y] = (plane == 0 ? 0 - Options.tileHeightLevel.get()
+						: getMapRegion().heightMap[plane - 1][x][y] - Options.tileHeightLevel.get());
 			}
 			for (int z = 1; z < 4; z++) {
-				if (this.getMapRegion().tileHeights[z][x][y] > this.getMapRegion().tileHeights[z - 1][x][y]) {
-					this.getMapRegion().tileHeights[z][x][y] = this.getMapRegion().tileHeights[z - 1][x][y];// Not sure
+				if (this.getMapRegion().heightMap[z][x][y] > this.getMapRegion().heightMap[z - 1][x][y]) {
+					this.getMapRegion().heightMap[z][x][y] = this.getMapRegion().heightMap[z - 1][x][y];// Not sure
 					// on this
 				}
 			}
@@ -4879,7 +4915,7 @@ public class SceneGraph {
 				tileState.preserve();
 				((TileChange<UnderlayState>) currentState.get()).preserveTileState(tileState);
 			}
-			this.getMapRegion().underlays[plane][x][y] = (byte) Options.underlayPaintId.get();
+			this.getMapRegion().underlay[plane][x][y] = (byte) Options.underlayPaintId.get();
 			this.tiles[plane][x][y].hasUpdated = true;
 
 		});
@@ -4907,13 +4943,13 @@ public class SceneGraph {
 				((TileChange<OverlayState>) currentState.get()).preserveTileState(tileState);
 			}
 			if (Options.overlayPaintShapeId.get() == 0) {
-				this.getMapRegion().overlays[plane][x][y] = (byte) 0;
+				this.getMapRegion().overlayIds[plane][x][y] = (byte) 0;
 			} else {
-				this.getMapRegion().overlays[plane][x][y] = (byte) Options.overlayPaintId
+				this.getMapRegion().overlayIds[plane][x][y] = (byte) Options.overlayPaintId
 						.get();
-				this.getMapRegion().overlayShapes[plane][x][y] = (byte) (Options.overlayPaintShapeId
+				this.getMapRegion().overlayShape[plane][x][y] = (byte) (Options.overlayPaintShapeId
 						.get() - 1);
-				this.getMapRegion().overlayOrientations[plane][x][y] = (byte) Options.rotation.get();
+				this.getMapRegion().overlayRotation[plane][x][y] = (byte) Options.rotation.get();
 			}
 			this.tiles[plane][x][y].hasUpdated = true;
 
@@ -4934,7 +4970,7 @@ public class SceneGraph {
 			initChanges();
 		}
 		int flag = Options.tileFlags.get().encode();
-		tiles.stream().forEach(tile -> getMapRegion().tileFlags[tile.plane][tile.positionX][tile.positionY] = (byte) flag);
+		tiles.stream().forEach(tile -> getMapRegion().flags[tile.plane][tile.positionX][tile.positionY] = (byte) flag);
 
 		getMapRegion().updateTiles();
 

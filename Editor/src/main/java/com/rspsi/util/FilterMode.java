@@ -11,6 +11,7 @@ public enum FilterMode {
 	SWATCH ("Swatch files (*.jswatch)" , "*.jswatch"), 
 	PNG("Image files (*.png)", "*.png"),
 	JSON("JSON Files (*.json)", "*.json"),
+	JM2("JM2 Files (*.jm2)", "*.jm2"),
 	NONE(" (*.)", "*."),
 	
 	;

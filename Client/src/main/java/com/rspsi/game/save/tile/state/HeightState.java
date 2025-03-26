@@ -20,7 +20,7 @@ public class HeightState extends TileState {
 
 	@Override
 	public void preserve() {
-		this.height = Client.getSingleton().mapRegion.tileHeights[z][x][y];
+		this.height = Client.getSingleton().mapRegion.heightMap[z][x][y];
 	}
 
 	@Override

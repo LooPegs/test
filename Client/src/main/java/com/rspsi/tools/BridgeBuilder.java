@@ -34,7 +34,7 @@ public class BridgeBuilder {
 										.flatMap(x -> IntStream.rangeClosed(-1, 1).mapToObj(y -> client.sceneGraph.tiles[tile.plane][tile.positionX + x][tile.positionY + y])))
 					.filter(tile -> !tilesAbove.contains(tile))
 					.collect(Collectors.toList());
-			int highestHeight = selectedTiles.stream().mapToInt(tile -> -client.mapRegion.tileHeights[lowerZ][tile.positionX][tile.positionY]).max().getAsInt();
+			int highestHeight = selectedTiles.stream().mapToInt(tile -> -client.mapRegion.heightMap[lowerZ][tile.positionX][tile.positionY]).max().getAsInt();
 
 			BitFlag bridgeFlag = new BitFlag();
 			bridgeFlag.flag(RenderFlags.BRIDGE_TILE);

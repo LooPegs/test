@@ -426,8 +426,9 @@
                               <Menu mnemonicParsing="false" text="Save to">
                                 <items>
                                     <MenuItem fx:id="saveToCacheBtn" disable="true" mnemonicParsing="false" text="cache" />
-                              <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text=".dat/.gz" />
-                                  <MenuItem fx:id="saveAsPackFile" mnemonicParsing="false" text=".pack" />
+                                    <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text=".dat/.gz" />
+                                    <MenuItem fx:id="saveAsPackFile" mnemonicParsing="false" text=".pack" />
+                                    <MenuItem fx:id="saveAsJm2File" mnemonicParsing="false" text=".jm2" />
                                 </items>
                               </Menu>
                         <SeparatorMenuItem mnemonicParsing="false" />

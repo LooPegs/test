@@ -1,12 +1,9 @@
 package com.rspsi.game.save.tile;
 
 import com.jagex.Client;
-import com.jagex.chunk.Chunk;
 import com.rspsi.game.save.StateChangeType;
 import com.rspsi.game.save.TileChange;
 import com.rspsi.game.save.tile.state.OverlayState;
-
-import java.awt.Rectangle;
 
 
 public class OverlayChange extends TileChange<OverlayState> {
@@ -22,9 +19,9 @@ public class OverlayChange extends TileChange<OverlayState> {
 			int y = state.getY();
 			int z = state.getZ();
 			//System.out.println("LOADING " + x + ":" + y + ":" + z);
-			Client.getSingleton().mapRegion.overlayOrientations[z][x][y] = state.getRotation();
-			Client.getSingleton().mapRegion.overlays[z][x][y] = state.getId();
-			Client.getSingleton().mapRegion.overlayShapes[z][x][y] = state.getShape();
+			Client.getSingleton().mapRegion.overlayRotation[z][x][y] = state.getRotation();
+			Client.getSingleton().mapRegion.overlayIds[z][x][y] = state.getId();
+			Client.getSingleton().mapRegion.overlayShape[z][x][y] = state.getShape();
 		}
 	}
 	

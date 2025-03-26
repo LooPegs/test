@@ -676,9 +676,9 @@ public final class Client implements Runnable {
 		yCameraPos = 0;
 		sceneGraph = new SceneGraph(64 * (chunkXLength), 64 * (chunkYLength), 4);
 		mapRegion = new MapRegion(sceneGraph, 64 * (chunkXLength), 64 * (chunkYLength));
-		mapRegion.tileHeights[0] = heights;
-		for(int x = 0;x<mapRegion.underlays[0].length;x++)
-			Arrays.fill(mapRegion.underlays[0][x], (byte)1);
+		mapRegion.heightMap[0] = heights;
+		for(int x = 0; x<mapRegion.underlay[0].length; x++)
+			Arrays.fill(mapRegion.underlay[0][x], (byte)1);
 		for(int x = 0;x<mapRegion.manualTileHeight[0].length;x++)
 			Arrays.fill(mapRegion.manualTileHeight[0][x], (byte)1);
 		mapRegion.setHeights();
@@ -1436,10 +1436,10 @@ public final class Client implements Runnable {
 		int groundY = y >> 7;
 		int k1 = x & 0x7f;
 		int l1 = y & 0x7f;
-		int i2 = mapRegion.tileHeights[z][groundX][groundY] * (128 - k1)
-				+ mapRegion.tileHeights[z][groundX + 1][groundY] * k1 >> 7;
-		int j2 = mapRegion.tileHeights[z][groundX][groundY + 1] * (128 - k1)
-				+ mapRegion.tileHeights[z][groundX + 1][groundY + 1] * k1 >> 7;
+		int i2 = mapRegion.heightMap[z][groundX][groundY] * (128 - k1)
+				+ mapRegion.heightMap[z][groundX + 1][groundY] * k1 >> 7;
+		int j2 = mapRegion.heightMap[z][groundX][groundY + 1] * (128 - k1)
+				+ mapRegion.heightMap[z][groundX + 1][groundY + 1] * k1 >> 7;
 		return i2 * (128 - l1) + j2 * l1 >> 7;
 	}
 
@@ -1546,10 +1546,10 @@ public final class Client implements Runnable {
 
 				int sizeX = x & 0x7f;
 				int sizeY = y & 0x7f;
-				int i2 = chunk.mapRegion.tileHeights[plane][worldX][worldY] * (128 - sizeX)
-						+ chunk.mapRegion.tileHeights[plane][worldX + 1][worldY] * sizeX >> 7;
-				int j2 = chunk.mapRegion.tileHeights[plane][worldX][worldY + 1] * (128 - sizeX)
-						+ chunk.mapRegion.tileHeights[plane][worldX + 1][worldY + 1] * sizeX >> 7;
+				int i2 = chunk.mapRegion.heightMap[plane][worldX][worldY] * (128 - sizeX)
+						+ chunk.mapRegion.heightMap[plane][worldX + 1][worldY] * sizeX >> 7;
+				int j2 = chunk.mapRegion.heightMap[plane][worldX][worldY + 1] * (128 - sizeX)
+						+ chunk.mapRegion.heightMap[plane][worldX + 1][worldY + 1] * sizeX >> 7;
 
 				return i2 * (128 - sizeY) + j2 * sizeY >> 7;
 			}

@@ -71,11 +71,11 @@ public class MapTile {
 			for (int y = 0; y < 64; y++) {
 				int i1 = (y) * 4;
 				for (int x = 0; x < 64; x++) {
-					if ((mapRegion.tileFlags[plane][x][y] & 0x18) == 0) {
+					if ((mapRegion.flags[plane][x][y] & 0x18) == 0) {
 						sceneGraph.drawMinimapTile(raster, x, y, plane, i1, 256);
 					}
 
-					if (plane < 3 && (mapRegion.tileFlags[plane + 1][x][y] & 8) != 0) {
+					if (plane < 3 && (mapRegion.flags[plane + 1][x][y] & 8) != 0) {
 						sceneGraph.drawMinimapTile(raster, x, y, plane + 1, i1, 256);
 					}
 					i1 += 4;
@@ -94,11 +94,11 @@ public class MapTile {
 			for (int y = 0; y < 64; y++) {
 				int i1 = (63 - y) * 256 * 4;
 				for (int x = 0; x < 64; x++) {
-					if ((mapRegion.tileFlags[plane][x][y] & 0x18) == 0) {
+					if ((mapRegion.flags[plane][x][y] & 0x18) == 0) {
 						sceneGraph.drawMinimapTile(raster, x, y, plane, i1, 256);
 					}
 
-					if (plane < 3 && (mapRegion.tileFlags[plane + 1][x][y] & 8) != 0) {
+					if (plane < 3 && (mapRegion.flags[plane + 1][x][y] & 8) != 0) {
 						sceneGraph.drawMinimapTile(raster, x, y, plane + 1, i1, 256);
 					}
 					i1 += 4;
@@ -116,7 +116,7 @@ public class MapTile {
 				for (int z = 0; z < 4; z++) {
 					for (int x = 0; x < 64; x++) {
 						for (int y = 0; y < 64; y++) {
-							mapRegion.tileFlags[z][x][y] = 0;
+							mapRegion.flags[z][x][y] = 0;
 						}
 					}
 				}

@@ -1,7 +1,6 @@
 package com.jagex.chunk;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.List;
 
 import com.rspsi.cache.CacheFileType;
@@ -13,7 +12,6 @@ import com.google.common.collect.Lists;
 import com.jagex.Client;
 import com.jagex.cache.def.ObjectDefinition;
 import com.jagex.cache.def.RSArea;
-import com.jagex.cache.graphics.IndexedImage;
 import com.jagex.cache.graphics.Sprite;
 import com.jagex.cache.loader.config.RSAreaLoader;
 import com.jagex.cache.loader.object.ObjectDefinitionLoader;
@@ -24,7 +22,6 @@ import com.jagex.map.MapRegion;
 import com.jagex.map.SceneGraph;
 import com.jagex.map.object.SpawnedObject;
 import com.jagex.net.ResourceResponse;
-import com.jagex.util.BitFlag;
 import com.jagex.util.ObjectKey;
 import com.rspsi.options.Options;
 
@@ -95,6 +92,7 @@ public class Chunk {
 	private ArrayDeque<SpawnedObject> spawns;
 
 	public MapRegion mapRegion;
+	public MapRegion mapRegionJm2;
 	
 	protected BooleanProperty resourceDelivered = new SimpleBooleanProperty(false); 
 	
@@ -161,11 +159,11 @@ public class Chunk {
 		for (int y = 0; y < 64; y++) {
 			int i1 = (63 - y) * 256 * 4;
 			for (int x = 0; x < 64; x++) {
-				if ((mapRegion.tileFlags[plane][offsetX + x][offsetY + y] & 0x18) == 0) {
+				if ((mapRegion.flags[plane][offsetX + x][offsetY + y] & 0x18) == 0) {
 					scenegraph.drawMinimapTile(raster, offsetX + x, offsetY + y, plane, i1, 256);
 				}
 
-				if (plane < 3 && (mapRegion.tileFlags[plane + 1][offsetX + x][offsetY + y] & 8) != 0) {
+				if (plane < 3 && (mapRegion.flags[plane + 1][offsetX + x][offsetY + y] & 8) != 0) {
 					scenegraph.drawMinimapTile(raster, offsetX + x, offsetY + y, plane + 1, i1, 256);
 				}
 				i1 += 4;
@@ -179,10 +177,10 @@ public class Chunk {
 		if(Options.showObjects.get()) {
 			for (int y = 0; y < 64; y++) {
 				for (int x = 0; x < 64; x++) {
-					if ((mapRegion.tileFlags[plane][offsetX + x][offsetY + y] & 0x18) == 0) {
+					if ((mapRegion.flags[plane][offsetX + x][offsetY + y] & 0x18) == 0) {
 						method50(x, y, plane, j1, l1);
 					}
-					if (plane < 3 && (mapRegion.tileFlags[plane + 1][offsetX + x][offsetY + y] & 8) != 0) {
+					if (plane < 3 && (mapRegion.flags[plane + 1][offsetX + x][offsetY + y] & 8) != 0) {
 						method50(x, y, plane + 1, j1, l1);
 					}
 				}
@@ -292,6 +290,7 @@ public class Chunk {
 			if (tileMapData != null) {
 				System.out.println("tilemap data not null");
 				mapRegion.unpackTiles(tileMapData, offsetX, offsetY, regionX, regionY);
+				//mapRegionJm2.unpackTilesForJm2Format(tileMapData, offsetX, offsetY, regionX, regionY);
 
 			} /*else if (regionY < 700) {//XXX Figure out why this exists
 				mapRegion.method174(0, 0, 64, 64);
@@ -301,8 +300,6 @@ public class Chunk {
 				mapRegion.unpackObjects(scenegraph, objectMapData, offsetX, offsetY);
 
 			}
-
-			
 
 			method63();
 			this.loaded = true;

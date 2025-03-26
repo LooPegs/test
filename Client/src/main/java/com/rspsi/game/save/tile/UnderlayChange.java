@@ -1,12 +1,9 @@
 package com.rspsi.game.save.tile;
 
 import com.jagex.Client;
-import com.jagex.chunk.Chunk;
 import com.rspsi.game.save.StateChangeType;
 import com.rspsi.game.save.TileChange;
 import com.rspsi.game.save.tile.state.UnderlayState;
-
-import java.awt.Rectangle;
 
 
 public class UnderlayChange extends TileChange<UnderlayState> {
@@ -21,7 +18,7 @@ public class UnderlayChange extends TileChange<UnderlayState> {
 			int x = state.getX();
 			int y = state.getY();
 			int z = state.getZ();
-			Client.getSingleton().mapRegion.underlays[z][x][y] = state.getId();
+			Client.getSingleton().mapRegion.underlay[z][x][y] = state.getId();
 		}
 	}
 	

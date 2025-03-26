@@ -20,7 +20,7 @@ public class UnderlayState extends TileState {
 
 	@Override
 	public void preserve() {
-		this.id = Client.getSingleton().mapRegion.underlays[z][x][y];
+		this.id = Client.getSingleton().mapRegion.underlay[z][x][y];
 	}
 
 	@Override

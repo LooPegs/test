@@ -102,6 +102,9 @@ public class MainController {
 	private MenuItem saveAsMenuItem;
 
 	@FXML
+	private MenuItem saveAsJm2File;
+
+	@FXML
 	private MenuItem preferencesMenuItem;
 
 	@FXML
@@ -687,5 +690,6 @@ public class MainController {
 	}
 
 	private WindowControls windowControls;
+
 
 }

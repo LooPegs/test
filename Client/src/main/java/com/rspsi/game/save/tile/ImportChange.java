@@ -1,12 +1,9 @@
 package com.rspsi.game.save.tile;
 
 import com.jagex.Client;
-import com.jagex.chunk.Chunk;
 import com.rspsi.game.save.StateChangeType;
 import com.rspsi.game.save.TileChange;
 import com.rspsi.game.save.tile.state.ImportTileState;
-
-import java.awt.Rectangle;
 
 public class ImportChange extends TileChange<ImportTileState> {
 
@@ -48,18 +45,18 @@ public class ImportChange extends TileChange<ImportTileState> {
 			int y = state.getY();
 			int z = state.getZ();
 
-			Client.getSingleton().mapRegion.tileFlags[z][x][y] = state.getFlagState().getFlag();
+			Client.getSingleton().mapRegion.flags[z][x][y] = state.getFlagState().getFlag();
 			
 
-			Client.getSingleton().mapRegion.overlayOrientations[z][x][y] = state.getOverlayState().getRotation();
-			Client.getSingleton().mapRegion.overlays[z][x][y] = state.getOverlayState().getId();
-			Client.getSingleton().mapRegion.overlayShapes[z][x][y] = state.getOverlayState().getShape();
+			Client.getSingleton().mapRegion.overlayRotation[z][x][y] = state.getOverlayState().getRotation();
+			Client.getSingleton().mapRegion.overlayIds[z][x][y] = state.getOverlayState().getId();
+			Client.getSingleton().mapRegion.overlayShape[z][x][y] = state.getOverlayState().getShape();
 			
 
-			Client.getSingleton().mapRegion.underlays[z][x][y] = state.getUnderlayState().getId();
+			Client.getSingleton().mapRegion.underlay[z][x][y] = state.getUnderlayState().getId();
 			
 
-			Client.getSingleton().mapRegion.tileHeights[z][x][y] = state.getHeightState().getHeight();
+			Client.getSingleton().mapRegion.heightMap[z][x][y] = state.getHeightState().getHeight();
 			if(x > maxX)
 				maxX = x;
 			if(y > maxY)

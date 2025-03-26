@@ -1,26 +1,21 @@
 package com.rspsi;
 
+import com.jagex.map.MapRegion;
 import com.rspsi.dialogs.RenderDistanceDialog;
 import com.rspsi.options.KeyboardState;
 import com.rspsi.util.*;
-import com.sun.javafx.stage.FocusUngrabEvent;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.stage.WindowEvent;
 import org.displee.utilities.GZIPUtils;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,15 +25,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.major.map.RenderFlags;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.impl.StdSchedulerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -577,7 +563,7 @@ public class MainWindow extends Application {
 					for(int plane = 1;plane<4;plane++) {
 						for(int absX = 0;absX<clientInstance.sceneGraph.width;absX++) {
 							for(int absY = 0;absY<clientInstance.sceneGraph.length;absY++) {
-								clientInstance.mapRegion.tileHeights[plane][absX][absY] = clientInstance.mapRegion.tileHeights[plane - 1][absX][absY] - 240;
+								clientInstance.mapRegion.heightMap[plane][absX][absY] = clientInstance.mapRegion.heightMap[plane - 1][absX][absY] - 240;
 							}
 						}
 					}
@@ -792,19 +778,91 @@ public class MainWindow extends Application {
 
 			byte[] tileMap = MultiMapEncoder.encode(Lists.newArrayList(clientInstance.chunks));
 
-
-
 			try {
-
 				Files.write(landscapeFile.toPath(), tileMap);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				FXDialogs.showError(stage,"Error while saving map!", "There was an error while writing packed maps file.");
 			}
-
-
 		});
+
+		controller.getSaveAsJm2File().setOnAction(act -> {
+			int startX = clientInstance.xCameraPos;
+			int startY = clientInstance.yCameraPos;
+
+			String section = "";
+
+			for(Chunk chunk : clientInstance.chunks) {
+				clientInstance.xCameraPos = (chunk.offsetX + 32) * 128;
+				clientInstance.yCameraPos = (chunk.offsetY + 32) * 128;
+
+				File landscapeFile = RetentionFileChooser.showSaveDialog("Enter a name for tiles...", stage, "m" + chunk.regionX + "_" + chunk.regionY, FilterMode.JM2);
+				if (landscapeFile == null)
+					return;
+
+				byte[] objectMap = clientInstance.sceneGraph.saveObjects(chunk);
+				byte[] tileMap = chunk.mapRegion.save_terrain_block(chunk);
+
+				MapRegion land = chunk.mapRegion;
+				SceneGraph locs = clientInstance.sceneGraph;
+
+				section += "==== MAP ====\n";
+
+				for (int level = 0; level < 4; level++) {
+					for (int x = 0; x < 64; x++) {
+						for (int z = 0; z < 64; z++) {
+							String str = "";
+
+							if (land.heightMap[level][x][z] != -1) {
+								str += "h" + land.heightMap[level][x][z] + " ";
+							}
+
+							if (land.overlayIds[level][x][z] != -1) {
+								if (land.overlayShape[level][x][z] != -1 && land.overlayShape[level][x][z] != 0 && land.overlayRotation[level][x][z] != -1 && land.overlayRotation[level][x][z] != 0) {
+									//		`o${land.overlayIds[level][x][z]};${land.overlayShape[level][x][z]};${land.overlayRotation[level][x][z]} `;
+									str += "o" + land.overlayIds[level][x][z] + ";" + land.overlayShape[level][x][z] + ";"  + land.overlayRotation[level][x][z] + " ";;
+								} else if (land.overlayShape[level][x][z] != -1 && land.overlayShape[level][x][z] != 0) {
+									//		`o${land.overlayIds[level][x][z]};${land.overlayShape[level][x][z]} `;
+									str += "o" + land.overlayIds[level][x][z] + ";" + land.overlayShape[level][x][z] + " ";
+								} else {
+									//		`o${land.overlayIds[level][x][z]} `;
+									str += "o" + land.overlayIds[level][x][z] + " ";;
+								}
+							}
+
+							if (land.flags[level][x][z] != -1) {
+								str += "f" + land.flags[level][x][z] + " ";
+							}
+
+							if (land.underlay[level][x][z] != -1) {
+								str += "u" + land.underlay[level][x][z] + " ";
+							}
+
+							if (!str.isEmpty()) {
+								section += level + " " + x + " " + z + ": " + str.trim() + "\n";
+							}
+						}
+					}
+				}
+
+				section += "\n==== LOC ====\n";
+				section += chunk.mapRegion.unpackObjectsPlease(clientInstance.sceneGraph, objectMap, chunk.offsetX, chunk.offsetY);
+
+				try {
+					Files.write(landscapeFile.toPath(), section.getBytes(StandardCharsets.UTF_8));
+
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					FXDialogs.showError(stage,"Error while saving map!", "There was an error while writing map file.");
+				}
+
+			}
+			clientInstance.xCameraPos = startX;
+			clientInstance.yCameraPos = startY;
+		});
+
 		controller.getSaveMenuItem().setOnAction(act -> {
 			int startX = clientInstance.xCameraPos;
 			int startY = clientInstance.yCameraPos;
@@ -863,11 +921,8 @@ public class MainWindow extends Application {
 				}
 
 			}
-
-
 			clientInstance.xCameraPos = startX;
 			clientInstance.yCameraPos = startY;
-
 		});
 	}
 

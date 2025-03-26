@@ -1,14 +1,11 @@
 package com.rspsi.game.save.tile;
 
 import com.jagex.Client;
-import com.jagex.chunk.Chunk;
 import com.jagex.map.MapRegion;
 import com.jagex.map.SceneGraph;
 import com.rspsi.game.save.StateChangeType;
 import com.rspsi.game.save.TileChange;
 import com.rspsi.game.save.tile.state.HeightState;
-
-import java.awt.Rectangle;
 
 
 public class HeightChange extends TileChange<HeightState> {
@@ -26,7 +23,7 @@ public class HeightChange extends TileChange<HeightState> {
 			int x = state.getX();
 			int y = state.getY();
 			int z = state.getZ();
-			mapRegion.tileHeights[z][x][y] = state.getHeight();
+			mapRegion.heightMap[z][x][y] = state.getHeight();
 		}
 		
 		int minX = 1000;

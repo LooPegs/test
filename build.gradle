@@ -3,7 +3,7 @@
 plugins {
 	id 'java'
 	id 'io.franzbecker.gradle-lombok' version '3.3.0'
-	//id 'org.openjfx.javafxplugin' version '0.0.7'
+	id 'org.openjfx.javafxplugin' version '0.0.7'
 	id 'application'
 	//id 'org.beryx.runtime' version '1.2.0' apply false
 }
@@ -31,7 +31,7 @@ subprojects {
 
 	apply plugin: 'java'
 	apply plugin: 'io.franzbecker.gradle-lombok'
-	//apply plugin: 'org.openjfx.javafxplugin'
+	apply plugin: 'org.openjfx.javafxplugin'
 	
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -60,11 +60,9 @@ subprojects {
         options.incremental = true
     }
 	
-	/*javafx {
+	javafx {
 	    version = "11.0.1"
-	    modules = [ 'javafx.fxml', 'javafx.controls', 'javafx.media', 'javafx.swing']
-	}*/
-	
-
+	    modules = [ 'javafx.fxml', 'javafx.controls', 'javafx.media', 'javafx.swing', 'javafx.graphics']
+	}
 }
 

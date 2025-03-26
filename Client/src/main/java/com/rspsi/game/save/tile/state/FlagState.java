@@ -20,7 +20,7 @@ public class FlagState extends TileState {
 
 	@Override
 	public void preserve() {
-		this.flag = Client.getSingleton().mapRegion.tileFlags[z][x][y];
+		this.flag = Client.getSingleton().mapRegion.flags[z][x][y];
 	}
 
 	@Override

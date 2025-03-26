@@ -1,12 +1,9 @@
 package com.rspsi.game.save.tile;
 
 import com.jagex.Client;
-import com.jagex.chunk.Chunk;
 import com.rspsi.game.save.StateChangeType;
 import com.rspsi.game.save.TileChange;
 import com.rspsi.game.save.tile.state.FlagState;
-
-import java.awt.Rectangle;
 
 
 public class FlagChange extends TileChange<FlagState> {
@@ -21,7 +18,7 @@ public class FlagChange extends TileChange<FlagState> {
 			int x = state.getX();
 			int y = state.getY();
 			int z = state.getZ();
-			Client.getSingleton().mapRegion.tileFlags[z][x][y] = state.getFlag();
+			Client.getSingleton().mapRegion.flags[z][x][y] = state.getFlag();
 		}
 	}
 

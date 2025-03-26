@@ -28,9 +28,9 @@ public class OverlayState extends TileState {
 	
 	@Override
 	public void preserve() {
-		this.id = Client.getSingleton().mapRegion.overlays[z][x][y];
-		this.rotation = Client.getSingleton().mapRegion.overlayOrientations[z][x][y];
-		this.shape = Client.getSingleton().mapRegion.overlayShapes[z][x][y];
+		this.id = Client.getSingleton().mapRegion.overlayIds[z][x][y];
+		this.rotation = Client.getSingleton().mapRegion.overlayRotation[z][x][y];
+		this.shape = Client.getSingleton().mapRegion.overlayShape[z][x][y];
 	}
 
 	@Override

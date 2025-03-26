@@ -1,6 +1,7 @@
 package com.jagex.entity.model;
 
 import javafx.geometry.Point3D;
+
 import lombok.Data;
 
 @Data
