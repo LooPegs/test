@@ -111,6 +111,7 @@ public class Chunk {
 		this.client = client;
 		this.scenegraph = client.sceneGraph;
 		this.mapRegion = client.mapRegion;
+		this.mapRegionJm2 = client.mapRegion;
 		
 		incompleteAnimables = new ArrayDeque<AnimableObject>();
 		spawns = new ArrayDeque<SpawnedObject>();
@@ -290,7 +291,7 @@ public class Chunk {
 			if (tileMapData != null) {
 				System.out.println("tilemap data not null");
 				mapRegion.unpackTiles(tileMapData, offsetX, offsetY, regionX, regionY);
-				//mapRegionJm2.unpackTilesForJm2Format(tileMapData, offsetX, offsetY, regionX, regionY);
+				//mapRegionJm2.unpackTilesForJM2Format(tileMapData, offsetX, offsetY, regionX, regionY);
 
 			} /*else if (regionY < 700) {//XXX Figure out why this exists
 				mapRegion.method174(0, 0, 64, 64);

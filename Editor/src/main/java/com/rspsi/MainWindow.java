@@ -804,8 +804,8 @@ public class MainWindow extends Application {
 				byte[] objectMap = clientInstance.sceneGraph.saveObjects(chunk);
 				byte[] tileMap = chunk.mapRegion.save_terrain_block(chunk);
 
-				MapRegion land = chunk.mapRegion;
-				SceneGraph locs = clientInstance.sceneGraph;
+				MapRegion land = chunk.mapRegionJm2;
+				land.unpackTilesForJM2Format(tileMap, chunk.offsetX, chunk.offsetY, chunk.regionX, chunk.regionY);
 
 				section += "==== MAP ====\n";
 
@@ -851,6 +851,7 @@ public class MainWindow extends Application {
 
 				try {
 					Files.write(landscapeFile.toPath(), section.getBytes(StandardCharsets.UTF_8));
+					land.unpackTiles(tileMap, chunk.offsetX, chunk.offsetY, chunk.regionX, chunk.regionY);
 
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

@@ -506,10 +506,13 @@ public final class MapRegion {
 					int x = xOffset + localX;
 					int y = yOffset + localY;
 
-					if (orientation == 0) {
-						locData += z + " " + x + " " + y + ": " + id + " " + type + "\n";
-					} else {
-						locData += z + " " + x + " " + y + ": " + id + " " + type + " " + orientation +"\n";
+					// Max default 225 object id
+					if (id < 3387) {
+						if (orientation == 0) {
+							locData += z + " " + x + " " + y + ": " + id + " " + type + "\n";
+						} else {
+							locData += z + " " + x + " " + y + ": " + id + " " + type + " " + orientation +"\n";
+						}
 					}
 				} while (true);
 			} while (true);
@@ -517,60 +520,29 @@ public final class MapRegion {
 		return locData;
 	}
 
-	public final void decodeMapData(Buffer buffer, int x, int y, int z, int regionX, int regionY, int orientation) {// XXX
-		//if (x >= 0 && x < width && y >= 0 && y < length) {
-			do {
-				int type = buffer.readUByte();
+	public void decodeMapDataForJm2Format(Buffer buffer, int x, int y, int z, int regionX, int regionY, int orientation) {// XXX
+		do {
+			int type = buffer.readUByte();
 
-				if (type == 0) {
-//					manualTileHeight[z][x][y] = 0;
-//					if (z == 0) {
-//						heightMap[0][x][y] = -calculateHeight(0xe3b7b + x + regionX, 0x87cce + y + regionY) * 8;
-//					} else {
-//						heightMap[z][x][y] = heightMap[z - 1][x][y];// - 240;
-//					}
-
-					return;
-				} else if (type == 1) {
-					//manualTileHeight[z][x][y] = 1;
-					int height = buffer.readUByte();
-//					if (height == 1) {
-//						height = 0;
-//					}
-//					if (z == 0) {
-					heightMap[z][x][y] = height; //-height *
-//					}
-//					} else {
-//						heightMap[z][x][y] = heightMap[z - 1][x][y] - height * 8;
-//					}
-
-					return;
-				} else if (type <= 49) {
-					overlayIds[z][x][y] = buffer.readByte();
-					overlayShape[z][x][y] = (byte) ((type - 2) / 4);
-					overlayRotation[z][x][y] = (byte) ((type - 2) & 3);//(type - 2 + orientation & 3);
-				} else if (type <= 81) {
-					flags[z][x][y] = (byte) (type - 49);
-				} else {
-					underlay[z][x][y] = (byte) (type - 81);
-				}
-			} while (true);
-		//}
-
-//		do {
-//			int in = buffer.readUByte();
-//			if (in == 0) {
-//				break;
-//			} else if (in == 1) {
-//				buffer.readUByte();
-//				return;
-//			} else if (in <= 49) {
-//				buffer.readUByte();
-//			}
-//		} while (true);
+			if (type == 0) {
+				return;
+			} else if (type == 1) {
+				int height = buffer.readUByte();
+				heightMap[z][x][y] = height;
+				return;
+			} else if (type <= 49) {
+				overlayIds[z][x][y] = buffer.readByte();
+				overlayShape[z][x][y] = (byte) ((type - 2) / 4);
+				overlayRotation[z][x][y] = (byte) ((type - 2) & 3);
+			} else if (type <= 81) {
+				flags[z][x][y] = (byte) (type - 49);
+			} else {
+				underlay[z][x][y] = (byte) (type - 81);
+			}
+		} while (true);
 	}
 
-	public final void decodeMapDataOriginal(Buffer buffer, int x, int y, int z, int regionX, int regionY, int orientation) {// XXX
+	public final void decodeMapData(Buffer buffer, int x, int y, int z, int regionX, int regionY, int orientation) {// XXX
 		if (x >= 0 && x < width && y >= 0 && y < length) {
 			flags[z][x][y] = 0;
 			do {
@@ -628,19 +600,30 @@ public final class MapRegion {
 		for (int z = 0; z < 4; z++) {
 			for (int localX = 0; localX < 64; localX++) {
 				for (int localY = 0; localY < 64; localY++) {
+					decodeMapData(buffer, localX + dX, localY + dY, z, regionX, regionY, 0);
+				}
+			}
+		}
+		this.setHeights();// XXX Fix for ending of region sloping down
+	}
+
+	public final void unpackTilesForJM2Format(byte[] data, int dX, int dY, int regionX, int regionY) {
+
+		Buffer buffer = new Buffer(data);
+		for (int z = 0; z < 4; z++) {
+			for (int localX = 0; localX < 64; localX++) {
+				for (int localY = 0; localY < 64; localY++) {
 					heightMap[z][localX][localY] = -1;
 //					overlayIds[z][localX][localY] = -1;
 					overlayShape[z][localX][localY] = -1;
 					overlayRotation[z][localX][localY] = -1;
 					flags[z][localX][localY] = -1;
 //					underlay[z][localX][localY] = -1;
-					decodeMapData(buffer, localX + dX, localY + dY, z, regionX, regionY, 0);
+					decodeMapDataForJm2Format(buffer, localX + dX, localY + dY, z, regionX, regionY, 0);
 				}
 			}
 		}
-
 		this.setHeights();// XXX Fix for ending of region sloping down
-
 	}
 
 	/**
