@@ -792,8 +792,13 @@ public class MainWindow extends Application {
 			int startY = clientInstance.yCameraPos;
 
 			String section = "";
-
-			for(Chunk chunk : clientInstance.chunks) {
+			//ArrayList<Chunk> test = new ArrayList<>();
+			//test.add(clientInsance.chunks.get(40));
+//			for(Chunk chunk : clientInstance.chunks) {
+//			for(Chunk chunk : test) {
+//			Chunk chunk = clientInstance.chunks.get(42);
+			String chunkid = FXDialogs.showTextInput(MainWindow.getSingleton().getStage(), "Save Chunk",  "Which chunk?", "");
+			Chunk chunk = clientInstance.chunks.get(Integer.valueOf(chunkid));
 				clientInstance.xCameraPos = (chunk.offsetX + 32) * 128;
 				clientInstance.yCameraPos = (chunk.offsetY + 32) * 128;
 
@@ -805,7 +810,8 @@ public class MainWindow extends Application {
 				byte[] tileMap = chunk.mapRegion.save_terrain_block(chunk);
 
 				MapRegion land = chunk.mapRegionJm2;
-				land.unpackTilesForJM2Format(tileMap, chunk.offsetX, chunk.offsetY, chunk.regionX, chunk.regionY);
+//				land.unpackTilesForJM2Format(tileMap, chunk.offsetX, chunk.offsetY, chunk.regionX, chunk.regionY);
+				land.unpackTilesForJM2Format(tileMap, 0, 0, chunk.regionX, chunk.regionY);
 
 				section += "==== MAP ====\n";
 
@@ -818,16 +824,19 @@ public class MainWindow extends Application {
 								str += "h" + land.heightMap[level][x][z] + " ";
 							}
 
-							if (land.overlayIds[level][x][z] != -1) {
+							if (land.overlayIds[level][x][z] != -1 && land.overlayIds[level][x][z] != 0) {
+								//convert to unsigned
+								int overlayid = land.overlayIds[level][x][z] & 0xFF;
+								System.out.println(land.overlayIds[level][x][z] + " converted to: " + overlayid);
 								if (land.overlayShape[level][x][z] != -1 && land.overlayShape[level][x][z] != 0 && land.overlayRotation[level][x][z] != -1 && land.overlayRotation[level][x][z] != 0) {
 									//		`o${land.overlayIds[level][x][z]};${land.overlayShape[level][x][z]};${land.overlayRotation[level][x][z]} `;
-									str += "o" + land.overlayIds[level][x][z] + ";" + land.overlayShape[level][x][z] + ";"  + land.overlayRotation[level][x][z] + " ";;
+									str += "o" + overlayid + ";" + land.overlayShape[level][x][z] + ";"  + land.overlayRotation[level][x][z] + " ";;
 								} else if (land.overlayShape[level][x][z] != -1 && land.overlayShape[level][x][z] != 0) {
 									//		`o${land.overlayIds[level][x][z]};${land.overlayShape[level][x][z]} `;
-									str += "o" + land.overlayIds[level][x][z] + ";" + land.overlayShape[level][x][z] + " ";
+									str += "o" + overlayid + ";" + land.overlayShape[level][x][z] + " ";
 								} else {
 									//		`o${land.overlayIds[level][x][z]} `;
-									str += "o" + land.overlayIds[level][x][z] + " ";;
+									str += "o" + overlayid + " ";;
 								}
 							}
 
@@ -836,7 +845,9 @@ public class MainWindow extends Application {
 							}
 
 							if (land.underlay[level][x][z] != -1) {
-								str += "u" + land.underlay[level][x][z] + " ";
+//							if (land.underlay[level][x][z] > -1) {
+								int underlayid = land.underlay[level][x][z] & 0xFF;
+								str += "u" + underlayid + " ";
 							}
 
 							if (!str.isEmpty()) {
@@ -847,8 +858,8 @@ public class MainWindow extends Application {
 				}
 
 				section += "\n==== LOC ====\n";
-				section += chunk.mapRegion.unpackObjectsPlease(clientInstance.sceneGraph, objectMap, chunk.offsetX, chunk.offsetY);
-
+//				section += chunk.mapRegion.unpackObjectsPlease(clientInstance.sceneGraph, objectMap, chunk.offsetX, chunk.offsetY);
+				section += chunk.mapRegion.unpackObjectsPlease(clientInstance.sceneGraph, objectMap, 0, 0);
 				try {
 					Files.write(landscapeFile.toPath(), section.getBytes(StandardCharsets.UTF_8));
 					land.unpackTiles(tileMap, chunk.offsetX, chunk.offsetY, chunk.regionX, chunk.regionY);
@@ -859,7 +870,7 @@ public class MainWindow extends Application {
 					FXDialogs.showError(stage,"Error while saving map!", "There was an error while writing map file.");
 				}
 
-			}
+//			}
 			clientInstance.xCameraPos = startX;
 			clientInstance.yCameraPos = startY;
 		});

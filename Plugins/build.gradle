@@ -32,7 +32,10 @@ subprojects {
     }
 
     dependencies {
-        compile project(':Editor')
+        implementation project(':Editor')
+        implementation project(":RS-Cache-Library")
+        implementation project(":Client")
+        implementation project(":RS-Cache-Library")
     }
 
 

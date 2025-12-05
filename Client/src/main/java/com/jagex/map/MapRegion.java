@@ -504,15 +504,19 @@ public final class MapRegion {
 					int type = config >> 2;
 					int orientation = config & 3;
 					int x = xOffset + localX;
+
 					int y = yOffset + localY;
 
+					System.out.println("x offset: " + xOffset + " y offset: " + yOffset);
 					// Max default 225 object id
-					if (id < 3387) {
+					//if (id < 3387) {
+					if (id < 123456) {
 						if (orientation == 0) {
 							locData += z + " " + x + " " + y + ": " + id + " " + type + "\n";
 						} else {
 							locData += z + " " + x + " " + y + ": " + id + " " + type + " " + orientation +"\n";
 						}
+						System.out.println(locData);
 					}
 				} while (true);
 			} while (true);
@@ -537,6 +541,7 @@ public final class MapRegion {
 			} else if (type <= 81) {
 				flags[z][x][y] = (byte) (type - 49);
 			} else {
+				System.out.println("test. z: " + z + " x: " + x + " y: " + y + " type: " + type);
 				underlay[z][x][y] = (byte) (type - 81);
 			}
 		} while (true);
