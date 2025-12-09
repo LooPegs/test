@@ -645,18 +645,10 @@ public class MainController {
 		});
 
 		fillObjsBtn.setOnAction(evt -> {
-			try {
-				String value = FXDialogs.showTextInput(MainWindow.getSingleton().getStage(), "Fill Objs", "Please enter id,shape,rotation: ", "");
-				if(value != null && !value.equals("")) {
-					String[] split = value.replaceAll(" ", "").split(",");
-					int id = Integer.valueOf(split[0]);
-					int shape = Integer.valueOf(split[1]);
-					int rotation = Integer.valueOf(split[2]);
-					ObjFiller.fillObjs(id, shape, rotation);
-				}
-			} catch (Exception e) {
-				FXDialogs.showError(application.getStage().getOwner(),"Error while filling objs!", "Message: " + e.getMessage());
+			if (Options.currentObject.get() == null) {
+				FXDialogs.showError(application.getStage().getOwner(),"Error", "Please select on object from your swatches");
 			}
+				ObjFiller.fillObjs();
 		});
 
 		Options.currentTool.addListener((observable, oldVal, newVal) -> {

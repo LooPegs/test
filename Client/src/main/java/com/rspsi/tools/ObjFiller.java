@@ -14,14 +14,18 @@ import com.rspsi.options.Options;
 
 public class ObjFiller {
 
-    public static void fillObjs(int objId, int objType, int rotation) throws Exception {
+    public static void fillObjs() {
         Client client = Client.getSingleton();
         if(client.loadState == LoadState.ACTIVE) {
 
             List<SceneTile> selectedTiles = client.sceneGraph.getSelectedTiles();
+
             client.sceneGraph.deleteObjects();
             for (SceneTile tile: selectedTiles) {
-                client.sceneGraph.addObject(tile.positionX, tile.positionY, tile.plane, objId, objType, rotation, false);
+                client.sceneGraph.getMapRegion().spawnObjectToWorld(client.sceneGraph, Options.currentObject.get().getId(),
+                        tile.positionX, tile.positionY, tile.plane, Options.currentObject.get().getType(),
+                        Options.rotation.get(), false);
+                //client.sceneGraph.addObject(tile.positionX, tile.positionY, tile.plane, objId, objType, rotation, false);
             }
 
         }
