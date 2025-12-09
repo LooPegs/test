@@ -526,6 +526,9 @@
                                  </accelerator>
                               </MenuItem>
                               <MenuItem fx:id="generateBridgeBtn" mnemonicParsing="false" text="Generate bridge" />
+                              <MenuItem fx:id="fillObjsBtn" mnemonicParsing="false" text="Fill objs" />
+                              <MenuItem fx:id="generateWallsBtn" mnemonicParsing="false" text="Place wall objs" />
+                              <MenuItem fx:id="generateShapesBtn" mnemonicParsing="false" text="Smooth overlay shapes" />
                               <SeparatorMenuItem mnemonicParsing="false" />
                               <MenuItem fx:id="forceMapUpdateBtn" mnemonicParsing="false" text="Force map update" />
                               <MenuItem fx:id="fixHeightsBtn" mnemonicParsing="false" text="Reset tile heights" />

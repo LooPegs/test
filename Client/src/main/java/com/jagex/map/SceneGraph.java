@@ -4833,7 +4833,7 @@ public class SceneGraph {
 		return null;
 	}
 
-	public List<SceneTile> getSelectedTiles() {
+	public List<SceneTile>            getSelectedTiles() {
 		return Stream.of(tiles[Options.currentHeight.get()]).flatMap(Stream::of).filter(tile -> tile.tileSelected).collect(Collectors.toList());
 	}
 

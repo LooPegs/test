@@ -65,6 +65,14 @@ public class ObjectPreviewWindow extends Application {
 		this.objectSwatch = objectSwatch;
 	}
 
+//	public int getSize() {
+//		objectswatch.
+//		return 0;
+//	}
+//
+//	public List<ObjectDataset> getWalls() {
+//		return 0;
+//	}
 	public void fillList() {
 		controller.getDefinitionTable().setOnMouseClicked(mouseEvent -> {
 			if(mouseEvent.getButton() == MouseButton.SECONDARY) {
@@ -273,6 +281,8 @@ public class ObjectPreviewWindow extends Application {
 			
 			objectSwatch.addSwatch(data);
 		});
+
+
 		
 
 		view.setZoom(1500);//Cheap fix for first added swatches being broken

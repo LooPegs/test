@@ -4,6 +4,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 
 import com.jfoenix.controls.JFXButton;
+import com.rspsi.tools.ObjFiller;
 import com.rspsi.util.Settings;
 import javafx.scene.control.*;
 import org.major.map.RenderFlags;
@@ -361,6 +362,15 @@ public class MainController {
 	
 	@FXML
 	private MenuItem generateBridgeBtn;
+
+	@FXML
+	public MenuItem generateWallsBtn;
+
+	@FXML
+	public MenuItem generateShapesBtn;
+
+	@FXML
+	private MenuItem fillObjsBtn;
 	
 	@FXML
 	private VBox root;
@@ -631,6 +641,21 @@ public class MainController {
 				BridgeBuilder.buildBridge();
 			} catch (Exception e) {
 				FXDialogs.showError(application.getStage().getOwner(),"Error while generating bridge!", "Message: " + e.getMessage());
+			}
+		});
+
+		fillObjsBtn.setOnAction(evt -> {
+			try {
+				String value = FXDialogs.showTextInput(MainWindow.getSingleton().getStage(), "Fill Objs", "Please enter id,shape,rotation: ", "");
+				if(value != null && !value.equals("")) {
+					String[] split = value.replaceAll(" ", "").split(",");
+					int id = Integer.valueOf(split[0]);
+					int shape = Integer.valueOf(split[1]);
+					int rotation = Integer.valueOf(split[2]);
+					ObjFiller.fillObjs(id, shape, rotation);
+				}
+			} catch (Exception e) {
+				FXDialogs.showError(application.getStage().getOwner(),"Error while filling objs!", "Message: " + e.getMessage());
 			}
 		});
 

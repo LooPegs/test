@@ -1,7 +1,12 @@
 package com.rspsi;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jagex.map.MapRegion;
+import com.jagex.map.tile.SceneTile;
 import com.rspsi.dialogs.RenderDistanceDialog;
+import com.rspsi.game.save.tile.state.OverlayState;
+import com.rspsi.misc.JsonUtil;
 import com.rspsi.options.KeyboardState;
 import com.rspsi.util.*;
 import javafx.beans.value.ChangeListener;
@@ -16,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -91,11 +98,41 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+
 @Slf4j
 @Getter
 public class MainWindow extends Application {
 
+	public static class TileData {
+		public int plane;
+		public int x;
+		public int y;
+		public int overlayid;
+		public int shape;
+		public int rotation;
+		public TileData(int plane, int x, int y, int overlayid, int shape, int rotation) {
+			this.plane = plane;
+			this.x = x;
+			this.y = y;
+			this.overlayid = overlayid;
+			this.shape = shape;
+			this.rotation = rotation;
+		}
+	}
+
 	private static MainWindow singleton;
+
+	/**
+	 * Rotate an 8-bit value left (circular shift).
+	 * @param value the 8-bit value (0-255)
+	 * @param count number of positions to rotate
+	 * @return rotated 8-bit value (0-255)
+	 */
+	public static int rotateLeft8(int value, int count) {
+		value &= 0xFF;       // ensure 8-bit
+		count &= 7;          // only 0-7 matter for 8 bits
+		return ((value << count) | (value >>> (8 - count))) & 0xFF;
+	}
 
 	static {
 
@@ -424,6 +461,459 @@ public class MainWindow extends Application {
 					}
 				}
 			});
+
+			controller.generateShapesBtn.setOnAction(evt -> {
+				Client client = Client.getSingleton();
+				List<SceneTile> selectedTiles = client.sceneGraph.getSelectedTiles();
+
+				int size = selectedTiles.size();
+				if (size == 0) {
+					FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "No tiles selected");
+					return;
+				}
+
+				SceneTile startTile = selectedTiles.get(0);
+				SceneTile endTile = selectedTiles.get(size-1);
+
+				int height = Math.abs(startTile.positionY - endTile.positionY) + 1;
+				int width = Math.abs(startTile.positionX - endTile.positionX) + 1;
+				//not a catchall for rectangles
+				if (size != height * width) {
+					FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "Rectangle please");
+					return;
+				}
+
+				//assume only one overlay id
+				int overlayid = -1;
+				//assume same plane
+				int plane = startTile.plane;
+
+				//mark tiles with overlay
+				// 1 = overlay shape 1 detected
+				// 0 = not detected
+				// -1 = skip
+				int [][] overlays = new int[width][height];
+				for (int i = 0; i < size; i++) {
+					SceneTile tile = selectedTiles.get(i);
+
+					//System.out.println("x: " + tile.positionX + " y: " + tile.positionY + " overlayid: " + client.sceneGraph.getMapRegion().overlayIds[plane][tile.positionX][tile.positionY]);
+
+					// square shape overlay
+					if (tile.shape == null && client.sceneGraph.getMapRegion().overlayIds[plane][tile.positionX][tile.positionY] > 0) {
+						overlays[i / height][i % height] = 1;
+//						//test
+//						client.sceneGraph.getMapRegion().overlayIds[plane][tile.positionX][tile.positionY] = 9;
+
+						//get the overlay id we're working with if we haven't already. assume only one overlay id
+						if (overlayid == -1) overlayid = client.sceneGraph.getMapRegion().overlayIds[plane][tile.positionX][tile.positionY] & 0xFF;
+					}
+				}
+
+				if (overlayid == -1) {
+					FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "Where my overlay");
+					return;
+				}
+
+				int[] dx = {0, 1, 1, 1, 0, -1, -1, -1}; // column offset
+				int[] dy = {1, 1, 0,-1,-1, -1, 0,  1}; // row offset
+				//now harvest corners from overlays array (check surrounding tiles)
+				//LinkedList<CoordPair> corners = new LinkedList<CoordPair>();
+				LinkedList<TileData> changedTiles = new LinkedList<>();
+				for (int x = 0; x < width; x++) {
+					big_loop: for (int y = 0; y < height; y++) {
+
+						if (overlays[x][y] == -1) continue;
+
+							int surroundingTiles = 0;
+							for (int i = 0; i < 8; i++) {
+								int nx = x + dx[i];
+								int ny = y + dy[i];
+
+								//boolean hasOverlay = false;
+								if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+									if (overlays[nx][ny] == 1) {
+										surroundingTiles |= 1 << i;
+									}
+								}
+							}
+							//System.out.println(Integer.toBinaryString(surroundingTiles));
+
+							if (surroundingTiles != 0) {
+
+                                    int shape = 11;
+                                    int rotation = -1;
+
+                                    int xcoord = startTile.positionX + x;
+                                    int ycoord = startTile.positionY + y;
+
+									int mask;
+									int pattern;
+
+//                                    int r1 = Integer.rotateLeft(surroundingTiles, 2);
+//                                    int r2 = Integer.rotateLeft(surroundingTiles, 4);
+//                                    int r3 = Integer.rotateLeft(surroundingTiles, 6);
+								check_surrounding:
+								{
+									//empty surrounded by three orthogonal
+									if (overlays[x][y] == 0) {
+										if (Integer.bitCount(surroundingTiles & 0b0101_0101) == 3) {
+											shape = 0;
+											rotation = 0;
+											System.out.println("3 orthogonal success:" + Integer.toBinaryString(surroundingTiles));
+											break check_surrounding;
+										}
+									}
+
+									//add long diagonal. _| orientation
+									pattern = 0b0001_0110;
+									mask = 0b1111_0111;
+									shape = 4;
+									if (overlays[x][y] == 0) {
+										for (int j = 0; j < 4; j++) {
+											if ((surroundingTiles & MainWindow.rotateLeft8(mask, j * 2)) == MainWindow.rotateLeft8(pattern, j * 2)) {
+												//check if it curves back
+												int farx = x + dx[j*2]*2;
+												int fary = y + dy[j*2]*2;
+
+												int farx2 = farx + dx[(j * 2 + 2) % 8];
+												int fary2 = fary + dy[(j * 2 + 2) % 8];
+
+												int farx3 = farx + dx[(j * 2 + 2) % 8] * 2;
+												int fary3 = fary + dy[(j * 2 + 2) % 8] * 2;
+
+												boolean far1Blocked = farx < 0 || farx >= width || fary < 0 || fary >= height || overlays[farx][fary] == 1;
+												boolean far2Blocked = farx2 < 0 || farx2 >= width || fary2 < 0 || fary2 >= height || overlays[farx2][fary2] == 1;
+												boolean far3Blocked = farx3 < 0 || farx3 >= width || fary3 < 0 || fary3 >= height || overlays[farx3][fary3] == 1;
+
+												if (!far1Blocked && (far2Blocked || far3Blocked)) {
+													rotation = (j) % 4;
+													//big piece
+													changedTiles.add(new TileData(plane, xcoord, ycoord, overlayid, shape, rotation));
+//													client.sceneGraph.getMapRegion().overlayIds[plane][xcoord][ycoord] = (byte) overlayid;
+//													client.sceneGraph.getMapRegion().overlayShape[plane][xcoord][ycoord] = (byte) shape;
+//													client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord][ycoord] = (byte) rotation;
+													//little piece
+													int xcoord2 = xcoord + dx[j*2];
+													int ycoord2 = ycoord + dy[j*2];
+//													client.sceneGraph.getMapRegion().overlayIds[plane][xcoord2][ycoord2] = (byte) overlayid;
+//													client.sceneGraph.getMapRegion().overlayShape[plane][xcoord2][ycoord2] = (byte) 2; //little triangle
+//													client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord2][ycoord2] = (byte) ((rotation + 2) % 4);
+
+													changedTiles.add(new MainWindow.TileData(plane, xcoord2, ycoord2, overlayid, 2, ((rotation + 2) % 4)));
+
+													//top of the L. so corner flattener doesn't interfere
+//													int xcoord3 = xcoord + dx[j*2+1];
+//													int ycoord3 = ycoord + dy[j*2+1];
+//													overlays[x+dx[j*2+1]][y+dy[j*2+1]] = -1;
+//													client.sceneGraph.getMapRegion().overlayIds[plane][xcoord3][ycoord3] = (byte) overlayid;
+//													client.sceneGraph.getMapRegion().overlayShape[plane][xcoord3][ycoord3] = (byte) 0; //square
+//													client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord3][ycoord3] = (byte) 0;
+													continue big_loop;
+
+												}
+
+
+											}
+										}
+									}
+
+									//add long diagonal. L orientation
+									pattern = 0b1101_0000;
+									mask = 0b1101_1111;
+									shape = 5;
+									if (overlays[x][y] == 0) {
+										for (int j = 0; j < 4; j++) {
+											if ((surroundingTiles & MainWindow.rotateLeft8(mask, j * 2)) == MainWindow.rotateLeft8(pattern, j * 2)) {
+												//check if it curves back
+												int farx = x + dx[j*2]*2;
+												int fary = y + dy[j*2]*2;
+
+												int farx2 = farx - dx[(j * 2 + 2) % 8];
+												int fary2 = fary - dy[(j * 2 + 2) % 8];
+
+												int farx3 = farx - dx[(j * 2 + 2) % 8] * 2;
+												int fary3 = fary - dy[(j * 2 + 2) % 8] * 2;
+
+												boolean far1Blocked = farx < 0 || farx >= width || fary < 0 || fary >= height || overlays[farx][fary] == 1;
+												boolean far2Blocked = farx2 < 0 || farx2 >= width || fary2 < 0 || fary2 >= height || overlays[farx2][fary2] == 1;
+												boolean far3Blocked = farx3 < 0 || farx3 >= width || fary3 < 0 || fary3 >= height || overlays[farx3][fary3] == 1;
+
+												if (!far1Blocked && (far2Blocked || far3Blocked)) {
+														rotation = (j) % 4;
+														//big piece
+//														client.sceneGraph.getMapRegion().overlayIds[plane][xcoord][ycoord] = (byte) overlayid;
+//														client.sceneGraph.getMapRegion().overlayShape[plane][xcoord][ycoord] = (byte) shape;
+//														client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord][ycoord] = (byte) rotation;
+													changedTiles.add(new MainWindow.TileData(plane, xcoord, ycoord, overlayid, shape, rotation));
+
+														//little piece
+														int xcoord2 = xcoord + dx[j*2];
+														int ycoord2 = ycoord + dy[j*2];
+//														client.sceneGraph.getMapRegion().overlayIds[plane][xcoord2][ycoord2] = (byte) overlayid;
+//														client.sceneGraph.getMapRegion().overlayShape[plane][xcoord2][ycoord2] = (byte) 3; //little triangle
+//														client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord2][ycoord2] = (byte) ((rotation + 2) % 4);
+													changedTiles.add(new MainWindow.TileData(plane, xcoord2, ycoord2, overlayid, 3, ((rotation + 2) % 4)));
+														//top of the L. so corner flattener doesn't interfere
+//														int xcoord3 = xcoord - dx[j*2+3];
+//														int ycoord3 = ycoord - dy[j*2+3];
+//														overlays[x-dx[j*2+1]][y-dy[j*2+1]] = -1;
+//														client.sceneGraph.getMapRegion().overlayIds[plane][xcoord3][ycoord3] = (byte) overlayid;
+//														client.sceneGraph.getMapRegion().overlayShape[plane][xcoord3][ycoord3] = (byte) 0; //square
+//														client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord3][ycoord3] = (byte) 0;
+														continue big_loop;
+												}
+
+
+											}
+										}
+									}
+
+									//flatten corner pieces
+									pattern = 0b0000_0101;
+									mask = 0b1111_1101;
+									shape = 1;
+									if (overlays[x][y] == 1) {
+										for (int j = 0; j < 4; j++) {
+											if ((surroundingTiles & MainWindow.rotateLeft8(mask, j * 2)) == MainWindow.rotateLeft8(pattern, j * 2)) {
+												rotation = (2+ j) % 4;
+												break check_surrounding;
+											}
+										}
+									}
+
+									//add corner piece inbetween diagonal
+									pattern = 0b0000_0101;
+									mask = 0b0111_0101;
+									shape = 1;
+									if (overlays[x][y] == 0) {
+										for (int j = 0; j < 4; j++) {
+											if ((surroundingTiles & MainWindow.rotateLeft8(mask, j * 2)) == MainWindow.rotateLeft8(pattern, j * 2)) {
+												rotation = (2 + j) % 4;
+												break check_surrounding;
+
+											}
+										}
+									}
+
+                                        continue big_loop;
+                                }
+								//System.out.println("overlayid=" + overlayid);
+//                                client.sceneGraph.getMapRegion().overlayIds[plane][xcoord][ycoord] = (byte) overlayid;
+//                                client.sceneGraph.getMapRegion().overlayShape[plane][xcoord][ycoord] = (byte) shape;
+//                                client.sceneGraph.getMapRegion().overlayRotation[plane][xcoord][ycoord] = (byte) rotation;
+								changedTiles.add(new MainWindow.TileData(plane, xcoord, ycoord, overlayid, shape, rotation));
+                            }
+					}
+				}
+
+				//make changes, undoable
+
+				if (client.sceneGraph.currentStateCorrect()) {
+					client.sceneGraph.initChanges();
+				}
+
+				for (TileData tile: changedTiles) {
+					int x = tile.x;
+					int y = tile.y;
+					int shape = tile.shape;
+					int rotation = tile.rotation;
+
+					if (SceneGraph.currentState.isPresent()) {
+						OverlayState tileState = new OverlayState(x, y, plane);
+						tileState.preserve();
+						((TileChange<OverlayState>) SceneGraph.currentState.get()).preserveTileState(tileState);
+					}
+
+					client.sceneGraph.getMapRegion().overlayIds[plane][x][y] = (byte) overlayid;
+					client.sceneGraph.getMapRegion().overlayShape[plane][x][y] = (byte) shape;
+					client.sceneGraph.getMapRegion().overlayRotation[plane][x][y] = (byte) rotation;
+
+					client.sceneGraph.tiles[plane][x][y].hasUpdated = true;
+				}
+
+				client.sceneGraph.getMapRegion().updateTiles();
+
+				SceneGraph.commitChanges();
+				//reload the map
+//				int positionX = clientInstance.xCameraPos;
+//				int positionY = clientInstance.yCameraPos;
+//
+//				byte[] packData = MultiMapEncoder.encode(Lists.newArrayList(clientInstance.chunks));
+//				Client.runLater.add(() ->{
+//					clientInstance.loadChunks(MultiMapEncoder.decode(packData));
+//					fullMapView.resizeMap();
+//					clientInstance.xCameraPos = positionX;
+//					clientInstance.yCameraPos = positionY;
+			});
+
+			controller.generateWallsBtn.setOnAction(evt -> {
+//				try {
+					//load swatch from file
+					if(!Client.gameLoaded.get()) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "Please wait until the plugin has fully loaded before doing this!");
+						return;
+					}
+
+					Client client = Client.getSingleton();
+					List<SceneTile> selectedTiles = client.sceneGraph.getSelectedTiles();
+					int size = selectedTiles.size();
+					if (size <= 0) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "No tiles selected");
+						return;
+					}
+
+					List<ObjectDataset> dataset = null;
+					try {
+						File file = RetentionFileChooser.showOpenDialog(FilterMode.SWATCH);
+						ObjectMapper mapper = JsonUtil.getDefaultMapper();
+						// mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+						dataset = mapper.readValue(file, new TypeReference<List<ObjectDataset>>() {
+						});
+					} catch (IOException e) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "IO error");
+						return;
+					}
+					if (dataset.size() != 3) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "swatch should be 3 objects");
+						return;
+					}
+					//ObjectPreviewWindow.instance.loadToSwatches(dataset);
+
+					//get input for 'inward' value
+//					String value = FXDialogs.showTextInput(MainWindow.getSingleton().getStage(), "Generate Walls", "Choose inward:0 or outward:1", "0");
+//					if (value == null || !(value.equals("0") || value.equals("1"))) {
+//						throw new Exception("input must be 0 or 1");
+//					}
+//					boolean inward = value.equals("0");
+
+					int id = dataset.get(0).getId();
+					if (id != dataset.get(1).getId() || id != dataset.get(2).getId()) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "Walls must be the same id (for now...)");
+						return;
+					}
+					SceneTile startTile = selectedTiles.get(0);
+					SceneTile endTile = selectedTiles.get(size-1);
+
+					int height = Math.abs(startTile.positionY - endTile.positionY) + 1;
+					int width = Math.abs(startTile.positionX - endTile.positionX) + 1;
+					//not a catchall for rectangles
+					if (size != height * width) {
+						FXDialogs.showError(MainWindow.getSingleton().getStage().getOwner(),"Error", "Rectangle please");
+						return;
+					}
+
+					//better all be on one plane
+					int plane = startTile.plane;
+
+//					//test
+//					client.sceneGraph.addObject(startTile.positionX, startTile.positionY, plane, id, 0, 0, false);
+//					client.sceneGraph.addObject(testTile.positionX, testTile.positionY, plane, id, 9, 0, false);
+
+//					client.sceneGraph.addObject(endTile.positionX, endTile.positionY, plane, id, 9, 0, false);
+
+
+//					int min_x = Integer.MAX_VALUE;
+//					int max_x = -1;
+//					int min_y = Integer.MAX_VALUE;
+//					int max_y = -1;
+
+					//turn into array
+					boolean [][] wallMap = new boolean[width][height];
+					for (int i = 0; i < size; i++) {
+						SceneTile tile = selectedTiles.get(i);
+
+						if (tile.shape == null)
+							continue;
+						if (tile.shape.getTileType() == 12) {
+							wallMap[i / height][i % height] = true;
+						}
+					}
+					//get surrounding tile data
+					int[] dx = {0, 1, 1, 1, 0, -1, -1, -1 }; // column offset
+					int[] dy = {1, 1, 0, -1, -1, -1, 0, 1 }; // row offset
+
+					for (int x = 0; x < width; x++) {
+						for (int y = 0; y < height; y++) {
+							if (wallMap[x][y] == false) continue;
+
+							int surroundingTiles = 0;
+
+							for (int i = 0; i < 8; i++) {
+								int nx = x + dx[i];
+								int ny = y + dy[i];
+
+								boolean neighbor = false;
+								if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+									neighbor = wallMap[nx][ny];
+								}
+
+								if (neighbor) {
+									surroundingTiles |= (1 << i); // set the i-th bit
+								}
+							}
+							//now determine wall shape based off surroundings
+							int type = -1;
+							int rotation = -1;
+							System.out.println((byte)surroundingTiles);
+							switch (surroundingTiles & 0xFF) { // ensure unsigned comparison
+								//case 0b11111111: type = 10; rotation = 0; break;
+
+								case 0b11111101: type = 1; rotation = 1; break;
+								case 0b11110111: type = 1; rotation = 2; break;
+								case 0b11011111: type = 1; rotation = 3; break;
+								case 0b01111111: type = 1; rotation = 0; break;
+
+								case 0b11110001: type = 0; rotation = 2; break;
+								case 0b11110011: type = 0; rotation = 2; break;
+								case 0b11111001: type = 0; rotation = 2; break;
+								case 0b11000111: type = 0; rotation = 3; break;
+								case 0b11001111: type = 0; rotation = 3; break;
+								case 0b11100111: type = 0; rotation = 3; break;
+								case 0b00011111: type = 0; rotation = 0; break;
+								case 0b00111111: type = 0; rotation = 0; break;
+								case 0b10011111: type = 0; rotation = 0; break;
+								case 0b01111100: type = 0; rotation = 1; break;
+								case 0b11111100: type = 0; rotation = 1; break;
+								case 0b01111110: type = 0; rotation = 1; break;
+
+								case 0b11111000: type = 9; rotation = 1; break;
+								case 0b01111000: type = 9; rotation = 1; break;
+								case 0b11110000: type = 9; rotation = 1; break;
+								case 0b01110000: type = 9; rotation = 1; break;
+								case 0b11100011: type = 9; rotation = 2; break;
+								case 0b11100001: type = 9; rotation = 2; break;
+								case 0b11000011: type = 9; rotation = 2; break;
+								case 0b11000001: type = 9; rotation = 2; break;
+								case 0b10001111: type = 9; rotation = 3; break;
+								case 0b10000111: type = 9; rotation = 3; break;
+								case 0b00001111: type = 9; rotation = 3; break;
+								case 0b00000111: type = 9; rotation = 3; break;
+								case 0b00111110: type = 9; rotation = 0; break;
+								case 0b00011110: type = 9; rotation = 0; break;
+								case 0b00111100: type = 9; rotation = 0; break;
+								case 0b00011100: type = 9; rotation = 0; break;
+							}
+
+
+							if (type == -1 || rotation == -1) continue;
+
+							SceneTile wallTile = selectedTiles.get(x*height + y);
+							client.sceneGraph.addObject(wallTile.positionX, wallTile.positionY, plane, id, type, rotation, false);
+
+						}
+
+					}
+
+
+
+
+
+//				} catch (Exception e) {
+//					FXDialogs.showError(primaryStage,"Error while generating walls!", "Message: " + e.getMessage());
+//				}
+			});
+
+
 			objectPreviewWindow = new ObjectPreviewWindow(objectSwatch);
 			objectPreviewWindow.start(new Stage());
 			
@@ -632,7 +1122,7 @@ public class MainWindow extends Application {
 
 			controller.getGetOverlayFromTile().setOnAction(evt -> {
 				if(clientInstance.sceneGraph != null) {
-					int overlayId = clientInstance.sceneGraph.getSelectedOverlay();
+					int overlayId = clientInstance.sceneGraph.getSelectedOverlay() & 0xFF;
 					int overlayShape = clientInstance.sceneGraph.getSelectedOverlayShape();
 					log.info("id {} shape {}", overlayId, overlayShape);
 					if(overlayId > 0) {
